@@ -1,0 +1,11 @@
+axios
+react
+react-dom
+react-scripts
+Flask
+yfinance
+react
+react-dom
+lightweight-charts
+technicalindicators
+axios

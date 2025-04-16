@@ -5,3 +5,4 @@
 (this project(name = Stock-Charting-App) was initially for Page 1 and app.py ),
 (Page 2 and app1.py were done in a separate project and added to this current project called Stock-Charting-App),
 (was unable to do the routing from page 1 to page 2),
+(app1.py and Page 2 are to run all the time)

@@ -1,0 +1,6 @@
+Page 1 is stockchart.jsx
+Page 2 is  papertrading.jsx
+app.py is for page 1
+app1.py is for page 2
+this project(name = Stock-Charting-App) was initially for Page 1 and app.py 
+Page 2 and app1.py were done in a separate project and added to this current project called Stock-Charting-App

@@ -1,16 +1,16 @@
 import React from "react";
-import StockChart from "./components/StockChart";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
+import { Outlet } from "react-router-dom";
 
-function App() {
+function Layout() {
     return (
-        <div>
+        <>
             <Header />
-            {/* <StockChart /> */}
+            <Outlet />
             <Footer />
-        </div>
+        </>
     );
 }
 
-export default App;
+export default Layout;

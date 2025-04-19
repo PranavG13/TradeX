@@ -16,6 +16,7 @@ manual_holidays = {
 }
 
 def is_market_open(region):
+    print("in is_market_open")
     tz = pytz.timezone('Asia/Kolkata') if region == 'IN' else pytz.timezone('US/Eastern')
     now = datetime.datetime.now(tz)
     weekday = now.weekday()
@@ -30,9 +31,11 @@ def is_market_open(region):
         return datetime.time(9, 30) <= now.time() <= datetime.time(16, 0)
 
 def get_region(symbol):
+    print("in get_region")
     return 'IN' if symbol.upper().endswith('.NS') else 'US'
 
 def floor_time(ts, resolution):
+    print("in floor_time")
     if resolution == "daily":
         return int(datetime.datetime.fromtimestamp(ts).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
     elif resolution == "5m":
@@ -43,6 +46,7 @@ def floor_time(ts, resolution):
         return ts
 
 def get_open_price(stock, target_date):
+    print("in get_open_price")
     try:
         hist = stock.history(start=target_date, end=target_date + datetime.timedelta(days=3), interval="1d")
         if not hist.empty:
@@ -53,6 +57,7 @@ def get_open_price(stock, target_date):
 
 @app.route('/historical/<string:symbol>', methods=['GET'])
 def get_historical(symbol):
+    print(f"in get_historical, symbol: {symbol}")
     resolution = request.args.get('resolution', '1d')
     interval_map = {
         'daily': '1d',
@@ -62,8 +67,11 @@ def get_historical(symbol):
         'monthly': '1mo'
     }
     yf_interval = interval_map.get(resolution, '1d')
+    print(f"trying to get data from ticker symbol")
     stock = yf.Ticker(symbol)
+    print(f"got stock data from ticker symbol")
     hist = stock.history(period='max', interval=yf_interval)
+    print(f"got stock history")
     data = []
     for i, row in hist.iterrows():
         timestamp = int(i.timestamp())
@@ -74,10 +82,12 @@ def get_historical(symbol):
             "low": round(row["Low"], 2),
             "close": round(row["Close"], 2)
         })
+    print(f'returning data: {data}')
     return jsonify(data)
 
 @app.route('/stock/<string:symbol>', methods=['GET'])
 def get_live_stock(symbol):
+    print("in get_live_stock")
     try:
         resolution = request.args.get('resolution', 'daily')
         region = get_region(symbol)
@@ -146,6 +156,7 @@ def get_live_stock(symbol):
 
 @app.route('/api/latest/<symbol>', methods=['GET'])
 def get_latest(symbol):
+    print("in get_latest")
     try:
         stock = yf.Ticker(symbol)
         hist = stock.history(period="1d", interval="1m")

@@ -4,7 +4,7 @@ import { SMA, EMA, RSI, MACD } from "technicalindicators";
 import axios from "axios";
 
 const StockChart = () => {
-    const [symbol, setSymbol] = useState("");
+    const [symbol, setSymbol] = useState("INFY.NS");
     const [ohlc, setOhlc] = useState(null);
     const [intervalId, setIntervalId] = useState(null);
     const [resolution, setResolution] = useState("daily");
@@ -24,12 +24,12 @@ const StockChart = () => {
         time: null
     });
     const rsiDataRef = useRef([]);
-const macdDataRef = useRef([]);
-const [market, setMarket] = useState("US");
+    const macdDataRef = useRef([]);
+    const [market, setMarket] = useState("US");
 
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
 
-    
-    
 
     const [smaPeriod, setSmaPeriod] = useState(14);
     const [emaPeriod, setEmaPeriod] = useState(14);
@@ -268,7 +268,9 @@ if (indicators.macd) {
 
             setLastUpdated(new Date(data.server_time * 1000).toLocaleString());
 
-            if (!marketOpen || !candleRef.current) return;
+            if (!marketOpen || !candleRef.current) {
+                return;
+            }
 
             setHistData(prevHist => {
                 const lastCandle = prevHist[prevHist.length - 1];
@@ -304,12 +306,17 @@ if (indicators.macd) {
         clearInterval(intervalId);
 
         try {
+            setIsLoading(true)
+            setIsError(false)
             const res = await axios.get(`http://localhost:5000/historical/${symbol}?resolution=${resolution}`);
             const fetchedHist = res.data;
+            console.log(`length of history fetched: ${fetchedHist.length}`);
+            setIsLoading(false)
             if (!chartRef.current || !fetchedHist.length) return;
             setHistData(fetchedHist);
 
             resetChart();
+            
 
             candleRef.current = chartRef.current.addSeries(CandlestickSeries);
             candleRef.current.setData(fetchedHist);
@@ -321,6 +328,8 @@ if (indicators.macd) {
             const id = setInterval(fetchData, 1000);
             setIntervalId(id);
         } catch (err) {
+            setIsLoading(false);
+            setIsError(true);
             console.error('Error loading data:', err);
             setMessage('Failed to load stock data');
         }
@@ -331,32 +340,50 @@ if (indicators.macd) {
     }, [indicators, smaPeriod, emaPeriod]);
 
     return (
-        <div style={{ width: '80%', margin: '0 auto', fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <input
-                    type="text"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                    placeholder="Enter stock symbol"
-                    style={{ padding: '10px', margin: '0 10px', fontSize: '14px' }}
-                />
-                <select value={resolution} onChange={(e) => setResolution(e.target.value)} style={{ padding: '10px', margin: '0 10px', fontSize: '14px' }}>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-                <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px' }}>
+        <div  className="w-auto mx-14 my-auto p-5">
+            <form 
+              onSubmit={handleSubmit} 
+              className="flex justify-between items-center mb-5 px-3 py-4 shadow-sm"
+            >
+                <div className=" flex flex-col items-start">
+                    <label htmlFor="symbol-input" className="text-sm py-2 font-semibold">Stock Symbol</label>
+                    <input
+                        type="text"
+                        value={symbol}
+                        id="symbol-input"
+                        onChange={(e) => setSymbol(e.target.value)}
+                        placeholder="Enter stock symbol"
+                        className="p-1 text-sm bg-gray-100 text-gray-700 shadow-inner"
+                    />
+                </div>
+                <div className=" flex flex-col items-start">
+                    <label htmlFor="resolution-input" className="text-sm font-semibold py-2">Resolution</label>
+                    <select 
+                    value={resolution} 
+                    id="resolution-input"
+                    onChange={(e) => setResolution(e.target.value)} 
+                    className="p-1 text-sm text-gray-700 bg-gray-100 shadow-inner"
+                    >
+                        <option value="daily" className="text-gray-700">Daily</option>
+                        <option value="weekly" className="text-gray-700">Weekly</option>
+                        <option value="monthly" className="text-gray-700">Monthly</option>
+                    </select>
+                </div>
+                <button
+                 type="submit" 
+                 className="px-2 py-3 bg-[#4CAF50] text-white border-none cursor-pointer text-sm rounded-sm font-semibold shadow-xl hover:shadow-none" 
+                >
                     Load Chart
                 </button>
             </form>
     
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '20px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+            <div className="flex flex-wrap mb-5 px-3 py-5">
+                <label className="flex items-center text-sm mr-10 font-semibold">
                     <input
                         type="checkbox"
                         checked={indicators.sma}
                         onChange={() => setIndicators(prev => ({ ...prev, sma: !prev.sma }))}
-                        style={{ marginRight: '10px' }}
+                        className="mr-2 cursor-pointer"
                     /> SMA
                     <input
                         type="number"
@@ -364,16 +391,16 @@ if (indicators.macd) {
                         onChange={(e) => setSmaPeriod(Number(e.target.value))}
                         min="1"
                         disabled={!indicators.sma}
-                        style={{ marginLeft: '10px', width: '60px' }}
+                        className="ml-2 w-15 font-medium text-gray-700 bg-gray-100 shadow-inner pl-2"
                     />
                 </label>
     
-                <label style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+                <label className="flex items-center text-sm mr-10 font-semibold">
                     <input
                         type="checkbox"
                         checked={indicators.ema}
                         onChange={() => setIndicators(prev => ({ ...prev, ema: !prev.ema }))}
-                        style={{ marginRight: '10px' }}
+                        className="mr-2 cursor-pointer"
                     /> EMA
                     <input
                         type="number"
@@ -381,99 +408,107 @@ if (indicators.macd) {
                         onChange={(e) => setEmaPeriod(Number(e.target.value))}
                         min="1"
                         disabled={!indicators.ema}
-                        style={{ marginLeft: '10px', width: '60px' }}
+                        className="ml-2 w-15 font-medium text-gray-700 bg-gray-100 shadow-inner pl-2"
                     />
                 </label>
     
-                <label style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+                <label className="flex items-center text-sm mr-10 font-semibold">
                     <input
                         type="checkbox"
                         checked={indicators.rsi}
                         onChange={() => setIndicators(prev => ({ ...prev, rsi: !prev.rsi }))}
-                        style={{ marginRight: '10px' }}
+                        className="mr-2 cursor-pointer"
                     /> RSI
                 </label>
     
-                <label style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+                <label className="flex items-center text-sm mr-10 font-semibold">
                     <input
                         type="checkbox"
                         checked={indicators.macd}
                         onChange={() => setIndicators(prev => ({ ...prev, macd: !prev.macd }))}
-                        style={{ marginRight: '10px' }}
+                        className="mr-2 cursor-pointer"
                     /> MACD
                 </label>
             </div>
     
-            <div style={{ marginBottom: '20px', fontSize: '14px' }}>Your Local Time: {userTime}</div>
+            <div className="mb-5 text-sm font-semibold">Your Local Time: <span className="font-medium text-gray-700 pl-1">{userTime}</span></div>
     
-            {message && <div style={{ marginBottom: '20px', fontSize: '14px' }}>{message}</div>}
+            {message && <div className="mb-4 text-sm font-semibold text-red-600">{message}</div>}
+
+            {isLoading && (<div className="text-2xl font-bold flex justify-center items-center">Loading...</div>)}
+
+            {isError && (<div className="text-xl font-semibold flex justify-center text-red-600 items-center">Something went wrong...</div>)}
+
+            {!isLoading && !isError && (
+                <>
+                    {ohlc && (
+                        <>
+                            <div className="flex justify-center items-center text-sm mb-5">
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="open" className="font-semibold">Open: </label>
+                                    <span id="open" className="text-gray-700">${ohlc.open}</span>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="high" className="font-semibold">High: </label>
+                                    <span id="high" className="text-gray-700">${ohlc.high}</span>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="low" className="font-semibold">Low: </label>
+                                    <span id="low" className="text-gray-700">${ohlc.low}</span>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="close" className="font-semibold">Close: </label>
+                                    <span id="close" className="text-gray-700">${ohlc.close}</span>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="updated" className="font-semibold">Updated: </label>
+                                    <span id="updated" className="text-gray-700">${lastUpdated}</span>
+                                </div>
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <label htmlFor="current" className="font-semibold">Current Price: </label>
+                                    <span id="current" className="text-gray-700">${currentPrice}</span>
+                                </div>
+                            </div>
+
+                            {returns && (
+                                <div className="flex justify-between items-center text-sm text-gray-500 mb-10">
+                                    <div className="flex-1"><strong>Date:</strong> {returns.date}</div>
+                                    <div className="flex-1"><strong>DTD:</strong> {returns.dtd}%</div>
+                                    <div className="flex-1"><strong>WTD:</strong> {returns.wtd}%</div>
+                                    <div className="flex-1"><strong>MTD:</strong> {returns.mtd}%</div>
+                                    <div className="flex-1"><strong>YTD:</strong> {returns.ytd}%</div>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {hoverData.ohlc && (
+                        <div className="mb-5 text-sm">
+                            <strong>Hovered Data ({new Date(hoverData.time * 1000).toLocaleString()}):</strong><br />
+                            OHLC - Open: ${hoverData.ohlc.open}, High: ${hoverData.ohlc.high}, Low: ${hoverData.ohlc.low}, Close: ${hoverData.ohlc.close}<br />
+                            {indicators.sma && hoverData.sma !== null && <>SMA: {hoverData.sma.toFixed(2)} | </>}
+                            {indicators.ema && hoverData.ema !== null && <>EMA: {hoverData.ema.toFixed(2)} | </>}
+                            {indicators.rsi && hoverData.rsi !== null && <>RSI: {hoverData.rsi.toFixed(2)} | </>}
+                            {indicators.macd && hoverData.macd !== null && <>MACD: {hoverData.macd.toFixed(2)}</>}
+                        </div>
+                    )}
+                </>
+            )}
+            
+            <div className={`flex flex-col justify-center items-center ${isLoading || isError ? 'hidden' : ''}`}>
+                <label htmlFor="chart" className="font-bold text-xl mb-5">Chart</label>
+                <div ref={chartContainerRef} id="chart" className="w-full h-100 mb-10" />
+
+                <label htmlFor="chart" className={`font-bold text-lg mb-5 ${indicators.rsi ? '' : 'hidden'}`}>RSI</label>
+                <div ref={rsiChartRef} id="rsi-chart" className={`w-full h-38 mb-10 ${indicators.rsi ? '' : 'hidden'}`} />
+
+                <label htmlFor="chart" className={`font-bold text-lg mb-5 ${indicators.macd ? '' : 'hidden'}`}>MACD</label>
+                <div ref={macdChartRef}  id="macd-chart" className={`w-full h-38 mb-10 ${indicators.macd ? '' : 'hidden'}`}/>
+                
+            </div>
+            
+        </div>
     
-            {ohlc && (
-  <>
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontSize: '16px',
-        marginBottom: '4px',
-      }}
-    >
-      <div style={{ flex: 1 }}>Open: ${ohlc.open}</div>
-      <div style={{ flex: 1 }}>High: ${ohlc.high}</div>
-      <div style={{ flex: 1 }}>Low: ${ohlc.low}</div>
-      <div style={{ flex: 1 }}>Close: ${ohlc.close}</div>
-      <div style={{ flex: 1 }}>Updated: {lastUpdated}</div>
-      <div style={{ flex: 1 }}>Current Price: ${currentPrice}</div>
-    </div>
-
-    {returns && (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '14px',
-          color: '#aaa',
-          marginBottom: '20px',
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <strong>Date:</strong> {returns.date}
-        </div>
-        <div style={{ flex: 1 }}>
-          <strong>DTD:</strong> {returns.dtd}%
-        </div>
-        <div style={{ flex: 1 }}>
-          <strong>WTD:</strong> {returns.wtd}%
-        </div>
-        <div style={{ flex: 1 }}>
-          <strong>MTD:</strong> {returns.mtd}%
-        </div>
-        <div style={{ flex: 1 }}>
-          <strong>YTD:</strong> {returns.ytd}%
-        </div>
-      </div>
-    )}
-  </>
-)}
-
-            {hoverData.ohlc && (
-    <div style={{ marginBottom: '20px', fontSize: '14px' }}>
-        <strong>Hovered Data ({new Date(hoverData.time * 1000).toLocaleString()}):</strong><br />
-        OHLC - Open: ${hoverData.ohlc.open}, High: ${hoverData.ohlc.high}, Low: ${hoverData.ohlc.low}, Close: ${hoverData.ohlc.close}<br />
-        {indicators.sma && hoverData.sma !== null && <>SMA: {hoverData.sma.toFixed(2)} | </>}
-        {indicators.ema && hoverData.ema !== null && <>EMA: {hoverData.ema.toFixed(2)} | </>}
-        {indicators.rsi && hoverData.rsi !== null && <>RSI: {hoverData.rsi.toFixed(2)} | </>}
-        {indicators.macd && hoverData.macd !== null && <>MACD: {hoverData.macd.toFixed(2)}</>}
-    </div>
-)}
-
-    
-            <div ref={chartContainerRef} style={{ width: '100%', height: '400px', marginBottom: '20px' }} />
-            <div ref={rsiChartRef} style={{ width: '100%', height: '150px', marginBottom: '20px' }} />
-            <div ref={macdChartRef} style={{ width: '100%', height: '150px', marginBottom: '20px' }} />
-        </div>
         
     );
     

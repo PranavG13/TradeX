@@ -1,15 +1,25 @@
 import React from "react";
+import { Routes, Route } from 'react-router-dom'
 import StockChart from "./components/StockChart";
-import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
+import Home from "./components/Home/Home";
+import PageNotFound from "./components/PageNotFound/PageNotFound";
+import Layout from "./Layout";
+import Login from "./components/Login/Login";
+import Register from "./components/Register/Register";
 
 function App() {
     return (
-        <div>
-            <Header />
-            {/* <StockChart /> */}
-            <Footer />
-        </div>
+        <>
+            <Routes>
+                <Route path="/" element={<Layout  />}>
+                    <Route path="" element={<Home />} />
+                    <Route  path="stockchart/" element={<StockChart />} />
+                </Route>
+                <Route path="register/" element={<Register />} />
+                <Route path="login/" element={<Login />} />
+                <Route path="*" element={<PageNotFound />} />
+            </Routes>
+        </>
     );
 }
 

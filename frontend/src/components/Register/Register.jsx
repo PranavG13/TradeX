@@ -1,12 +1,29 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup"
+import * as yup from "yup"
 import AxiosInstance from "../AxiosInstance";
+
 
 function Register() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
+
+    const schema = yup
+    .object({
+        email: yup.string().email('Field expects an email address').required("Enter Email"),
+        password: yup.string()
+                    .required("Enter Password")
+                    .min(8, "Password must be at least 8 characters long")
+                    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+                    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+                    .matches(/[0-9]/, "password must contain at least one number")
+                    .matches(/[!@#$%^&*(),.?':;{}|<>]/, "password must contain at least one special character"),
+        confirm_password: yup.string().required("Confirm Password")
+                        .oneOf( [yup.ref("password"), null] , "passwords must match")
+    })
 
     const navigate = useNavigate()
 
@@ -14,7 +31,9 @@ function Register() {
         register,
         handleSubmit,
         formState: {errors},
-    } = useForm()
+    } = useForm({
+        resolver: yupResolver(schema)
+    })
 
     const onSubmit = (data) => {
         console.log("form submitted", data);

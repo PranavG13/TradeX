@@ -6,14 +6,18 @@ import PageNotFound from "./components/PageNotFound/PageNotFound";
 import Layout from "./Layout";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 function App() {
     return (
         <>
             <Routes>
-                <Route path="/" element={<Layout  />}>
-                    <Route path="" element={<Home />} />
-                    <Route  path="stockchart/" element={<StockChart />} />
+                <Route element={<ProtectedRoute />} >
+                    {/* All Protected Routes must go in here  */}
+                    <Route path="/" element={<Layout  />}>
+                        <Route path="" element={<Home />} />
+                        <Route  path="stockchart/" element={<StockChart />} />
+                    </Route>
                 </Route>
                 <Route path="register/" element={<Register />} />
                 <Route path="login/" element={<Login />} />

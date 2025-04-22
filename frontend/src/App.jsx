@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from 'react-router-dom'
 import StockChart from "./components/StockChart";
 import Home from "./components/Home/Home";
+import PaperTrading from "./components/PaperTrading";
 import PageNotFound from "./components/PageNotFound/PageNotFound";
 import Layout from "./Layout";
 import Login from "./components/Login/Login";
@@ -17,6 +18,7 @@ function App() {
                     <Route path="/" element={<Layout  />}>
                         <Route path="" element={<Home />} />
                         <Route  path="stockchart/" element={<StockChart />} />
+                        <Route  path="papertrading/" element={<PaperTrading />} />
                     </Route>
                 </Route>
                 <Route path="register/" element={<Register />} />

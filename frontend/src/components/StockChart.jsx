@@ -462,7 +462,7 @@ if (indicators.macd) {
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center items-center">
                                     <label htmlFor="updated" className="font-semibold">Updated: </label>
-                                    <span id="updated" className="text-gray-700">${lastUpdated}</span>
+                                    <span id="updated" className="text-gray-700">{lastUpdated}</span>
                                 </div>
                                 <div className="flex-1 flex flex-col justify-center items-center">
                                     <label htmlFor="current" className="font-semibold">Current Price: </label>
@@ -492,6 +492,10 @@ if (indicators.macd) {
                             {indicators.macd && hoverData.macd !== null && <>MACD: {hoverData.macd.toFixed(2)}</>}
                         </div>
                     )}
+                    <div className="w-full flex justify-around items-center my-10 mx-10">
+                        <button className="px-5 py-2 bg-green-600 shadow-lg text-white text-center rounded-lg hover:shadow-none cursor-pointer font-semibold" >Buy</button>
+                        <button className="px-5 py-2 bg-red-600 shadow-lg text-white text-center rounded-lg hover:shadow-none cursor-pointer font-semibold">Sell</button>
+                    </div>
                 </>
             )}
             

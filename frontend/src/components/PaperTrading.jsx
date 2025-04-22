@@ -31,19 +31,18 @@ function PaperTrading() {
 
   const fetchSymbolPrice = async (symbol) => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/price/${symbol}`);
-      return response.data.price;  // Extract and return the price
+      const response = await axios.get(`http://localhost:5000/api/price/${symbol}`);
+      return response.data.price;
     } catch (error) {
       console.error(`Error fetching price for ${symbol}:`, error);
       return null;
     }
   };
 
-
   const fetchStockDetails = async (symbol) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:5001/api/details/${symbol}`);
+      const response = await axios.get(`http://localhost:5000/api/details/${symbol}`);
       setStockDetails(response.data);
     } catch (error) {
       console.error('Error fetching stock details:', error);
@@ -52,15 +51,11 @@ function PaperTrading() {
       setIsLoading(false);
     }
   };
-  
-  
 
   const getCurrentPrice = (symbol) => {
     const upperSymbol = symbol.toUpperCase();
-    return prices[upperSymbol] || 0; // Use fallback if not yet available
+    return prices[upperSymbol] || 0;
   };
-  
-  
 
   const approximatelyEqual = (a, b, epsilon = 0.01) => {
     return Math.abs(a - b) < epsilon;
@@ -75,7 +70,7 @@ function PaperTrading() {
 
     const newPortfolio = currentPortfolio.filter(trade => {
       const price = updatedPrices[trade.symbol];
-      if (!price) return true; // Keep trade if price not available
+      if (!price) return true;
 
       const isBuy = trade.side === 'buy';
       const sl = trade.stoploss;
@@ -96,7 +91,7 @@ function PaperTrading() {
       if (shouldCloseBuy || shouldCloseSell) {
         console.log(`Auto-closing ${trade.side.toUpperCase()} trade ${trade.id} for ${trade.symbol}`);
         closeTrade(trade.id, price);
-        portfolioChanged = true; // Mark as changed!
+        portfolioChanged = true;
         return false;
       }
       
@@ -131,7 +126,6 @@ function PaperTrading() {
       pnl 
     }];
 
-    // Update all states
     setPortfolio(newPortfolio);
     setHistory(newHistory);
     setBalance(updatedBalance);
@@ -140,42 +134,32 @@ function PaperTrading() {
   };
 
   const updatePortfolioValuesFromData = (data) => {
-    let invested = 0; // Total amount invested in portfolio
-    let current = 0;  // Total current value of holdings
-    let totalPnl = 0; // Total P&L for the entire portfolio
+    let invested = 0;
+    let current = 0;
+    let totalPnl = 0;
   
-    // Iterate through each trade in the portfolio
     data.forEach((trade) => {
-      const entryPrice = trade.entry_price;  // Price at which the stock was bought
-      const currentPrice = getCurrentPrice(trade.symbol);  // Get the current price of the symbol
-      const quantity = Number(trade.quantity);  // Quantity of the stock/crypto
-  
-      // Calculate the total invested for this trade
+      const entryPrice = trade.entry_price;
+      const currentPrice = getCurrentPrice(trade.symbol);
+      const quantity = Number(trade.quantity);
+
       const tradeCost = entryPrice * quantity;
       invested += tradeCost;
   
-      // Calculate the current value of this trade
       const tradeCurrentValue = currentPrice * quantity;
       current += tradeCurrentValue;
   
-      // Calculate P&L for this trade
       const tradePnl = tradeCurrentValue - tradeCost;
-      totalPnl += tradePnl;  // Accumulate P&L
+      totalPnl += tradePnl;
     });
   
-    // Calculate Percent P&L (using total invested)
     const percent = invested > 0 ? (totalPnl / invested) * 100 : 0;
   
-    // Update state with the calculated values
-    setAmountInvested(invested); // Set total invested
-    setCurrentValue(current);     // Set current portfolio value
-    setTotalPNL(totalPnl);       // Set total P&L
-    setPercentPNL(percent);      // Set percentage P&L
+    setAmountInvested(invested);
+    setCurrentValue(current);
+    setTotalPNL(totalPnl);
+    setPercentPNL(percent);
   };
-  
-    
-
-   
 
   const loadStorage = () => {
     try {
@@ -195,7 +179,6 @@ function PaperTrading() {
       resetBalance();
     }
   };
-  
 
   const saveStorage = (bal, port, hist) => {
     try {
@@ -208,9 +191,7 @@ function PaperTrading() {
   };
 
   const placeTrade = async () => {
-    const symbol = selectedSymbol.toUpperCase(); // Normalize to uppercase
-  
-    // Fetch price for the symbol on demand
+    const symbol = selectedSymbol.toUpperCase();
     const price = await fetchSymbolPrice(symbol);
     
     if (!price || price <= 0) {
@@ -224,7 +205,6 @@ function PaperTrading() {
       return;
     }
     
-    // Validate stoploss and takeprofit if provided
     if (stoploss && takeprofit) {
       if (
         (side === 'buy' && parseFloat(stoploss) >= parseFloat(takeprofit)) ||
@@ -252,15 +232,11 @@ function PaperTrading() {
     setPortfolio(newPortfolio);
     setBalance(newBalance);
     updatePortfolioValuesFromData(newPortfolio);
-    
-    // Optionally, update the prices state if you want to keep it in sync:
     setPrices((prevPrices) => ({ ...prevPrices, [symbol]: price }));
-  
-    // Reset the stoploss and takeprofit form fields
     setStoploss('');
     setTakeprofit('');
   };
-  
+
   const fetchPrices = async () => {
     try {
       const symbols = Array.from(new Set([
@@ -268,9 +244,8 @@ function PaperTrading() {
         ...portfolioRef.current.map(trade => trade.symbol)
       ]));
   
-      // Use axios to fetch prices for each symbol
       const pricePromises = symbols.map(symbol => 
-        axios.get(`http://localhost:5001/api/price/${symbol}`)
+        axios.get(`http://localhost:5000/api/price/${symbol}`)
       );
   
       const responses = await Promise.all(pricePromises);
@@ -289,7 +264,7 @@ function PaperTrading() {
       return null;
     }
   };
-  
+
   const resetBalance = () => {
     if (window.confirm('Are you sure you want to reset your balance and all trades?')) {
       localStorage.clear();
@@ -303,7 +278,6 @@ function PaperTrading() {
     }
   };
 
-  // Initialize and set up interval
   useEffect(() => {
     const initialize = async () => {
       await fetchPrices();
@@ -319,29 +293,229 @@ function PaperTrading() {
   }, []);
 
   useEffect(() => {
-    console.log('Fetched Prices:', prices);
-  }, [prices]);
-  
-  
-  
-  useEffect(() => {
     const priceInterval = setInterval(async () => {
-      // Fetch the latest prices first
       const updatedPrices = await fetchPrices();
       if (updatedPrices) {
-        // Recalculate the portfolio values with the updated prices
         updatePortfolioValuesFromData(portfolioRef.current);
       }
-    }, 5000); // Update every 5 seconds
-  
+    }, 5000);
+
     return () => clearInterval(priceInterval);
-  }, []); // Empty dependency array to run only on mount
-  
+  }, []);
+
   return (
     <div className="dashboard">
+      <style>
+        {`
+        .dashboard {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+          color: #333;
+          background-color: #f5f7fa;
+        }
+
+        h1, h2 {
+          color: #2c3e50;
+          margin-bottom: 20px;
+        }
+
+        h1 {
+          font-size: 28px;
+          text-align: center;
+          border-bottom: 2px solid #3498db;
+          padding-bottom: 10px;
+          margin-bottom: 30px;
+        }
+
+        h2 {
+          font-size: 22px;
+          margin-top: 30px;
+        }
+
+        .bold {
+          font-weight: bold;
+        }
+
+        .summary-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .card {
+          background: white;
+          border-radius: 8px;
+          padding: 15px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card p {
+          margin: 10px 0;
+          font-size: 16px;
+        }
+
+        button {
+          background-color: #3498db;
+          color: white;
+          border: none;
+          padding: 10px 15px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background-color 0.3s;
+          margin: 5px 0;
+        }
+
+        button:hover:not(:disabled) {
+          background-color: #2980b9;
+        }
+
+        button:disabled {
+          background-color: #95a5a6;
+          cursor: not-allowed;
+        }
+
+        .reset-button {
+          background-color: #e74c3c;
+          margin-bottom: 20px;
+        }
+
+        .reset-button:hover:not(:disabled) {
+          background-color: #c0392b;
+        }
+
+        .symbol-search, .trade-form {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          margin-bottom: 30px;
+        }
+
+        .search-controls {
+          display: flex;
+          gap: 10px;
+        }
+
+        input, select {
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+          flex: 1;
+        }
+
+        input:focus, select:focus {
+          outline: none;
+          border-color: #3498db;
+        }
+
+        .trade-options {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .form-group label {
+          margin-bottom: 5px;
+          font-weight: 500;
+        }
+
+        .table-container {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 15px;
+          background: white;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+          padding: 12px 15px;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+        }
+
+        th {
+          background-color: #3498db;
+          color: white;
+          font-weight: 500;
+        }
+
+        tr:hover {
+          background-color: #f5f5f5;
+        }
+
+        .side {
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+
+        .side.buy {
+          color: #27ae60;
+        }
+
+        .side.sell {
+          color: #e74c3c;
+        }
+
+        .positive {
+          color: #27ae60;
+          font-weight: 500;
+        }
+
+        .negative {
+          color: #e74c3c;
+          font-weight: 500;
+        }
+
+        .no-trades, .no-history {
+          text-align: center;
+          padding: 20px;
+          color: #7f8c8d;
+          font-style: italic;
+        }
+
+        .stock-details {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          margin-bottom: 30px;
+        }
+
+        .details-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+          .summary-cards, .trade-options, .details-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .search-controls {
+            flex-direction: column;
+          }
+        }
+        `}
+      </style>
+
       <h1>Paper Trading</h1>
 
-      {/* Summary Cards */}
       <div className="summary-cards">
         <div className="card">
           <p>💰 Balance: <span className="bold">${balance.toFixed(2)}</span></p>
@@ -349,14 +523,13 @@ function PaperTrading() {
         </div>
         <div className="card">
           <p>💸 Amount Invested: <span className="bold">${amountInvested.toFixed(2)}</span></p>
-          
+        </div>
+        {/*<div className="card">
+          <p>📊 Current Value: <span className="bold">${currentValue.toFixed(2)}</span></p>
         </div>
         <div className="card">
-          
-        </div>
-        <div className="card">
-          
-        </div>
+          <p>📈 Total P&L: <span className={totalPNL >= 0 ? 'positive' : 'negative'}>${totalPNL.toFixed(2)} ({percentPNL.toFixed(2)}%)</span></p>
+        </div>*/}
       </div>
 
       <button 
@@ -367,7 +540,6 @@ function PaperTrading() {
         {isLoading ? 'Loading...' : 'Reset Balance'}
       </button>
 
-      {/* Search for Symbol */}
       <div className="symbol-search">
         <h2>Search for Symbol</h2>
         <div className="search-controls">
@@ -378,16 +550,15 @@ function PaperTrading() {
             value={selectedSymbol}
             disabled={isLoading}
           />
-         <button
-  onClick={() => fetchStockDetails(selectedSymbol)}  // ← Pass the symbol
-  disabled={isLoading}
->
-  {isLoading ? 'Loading...' : 'Get Details'}
-</button>
+          <button
+            onClick={() => fetchStockDetails(selectedSymbol)}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Get Details'}
+          </button>
         </div>
       </div>
 
-      {/* Stock Details */}
       {stockDetails && (
         <div className="stock-details">
           <h2>Stock Details for {selectedSymbol}</h2>
@@ -403,7 +574,6 @@ function PaperTrading() {
         </div>
       )}
 
-      {/* Trading Form */}
       <div className="trade-form">
         <h2>Place Trade</h2>
         <div className="trade-options">
@@ -426,7 +596,6 @@ function PaperTrading() {
               min="0.001"
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-
               disabled={isLoading}
             />
           </div>
@@ -461,7 +630,6 @@ function PaperTrading() {
         </button>
       </div>
 
-      {/* Open Trades */}
       <div className="open-trades">
         <h2>Open Trades ({portfolio.length})</h2>
         {portfolio.length === 0 ? (
@@ -522,7 +690,6 @@ function PaperTrading() {
         )}
       </div>
 
-      {/* History */}
       <div className="history">
         <h2>Trade History ({history.length})</h2>
         {history.length === 0 ? (
@@ -547,7 +714,6 @@ function PaperTrading() {
                     <td>{trade.symbol}</td>
                     <td className={`side ${trade.side}`}>{trade.side}</td>
                     <td>{Number(trade.quantity).toFixed(4)}</td>
-
                     <td>${trade.entry_price.toFixed(2)}</td>
                     <td>${trade.exit_price.toFixed(2)}</td>
                     <td className={trade.pnl >= 0 ? 'positive' : 'negative'}>
@@ -565,4 +731,4 @@ function PaperTrading() {
   );
 }
 
-export default PaperTrading
+export default PaperTrading;

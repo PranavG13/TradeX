@@ -17,7 +17,7 @@ function Header() {
     return (
         <header className="shadow sticky z-50 top-0 ">
             <nav className="bg-white border-gray-200 p-4 flex flex-row justify-between">
-                    <div className="px-2"><h2 className="text-lg font-bold font-sans">TradeX</h2></div>
+                    <div className="px-2"><h2 className="text-lg font-bold font-sans cursor-pointer"><NavLink to="/">TradeX</NavLink></h2></div>
                 <div className="flex flex-wrap justify-center items-center mx-auto max-w-screen-xl">
                     <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
                         <li>

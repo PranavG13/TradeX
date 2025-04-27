@@ -28,3 +28,39 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = [] # any required field other than username and password
 
     # ADD Additional fields for user Profiling
+
+class OpenTrade(models.Model):
+    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='open_trades')
+    symbol = models.CharField(max_length=10)
+    quantity = models.PositiveIntegerField(default=1, blank=True)
+    buy_price = models.FloatField()
+    bought_date = models.DateTimeField(auto_now_add=True)
+    current_price = models.FloatField(blank=True, null=True)
+    stoploss = models.FloatField(default=None, blank=True, null=True)
+    takeprofit = models.FloatField(default=None, blank=True, null=True)
+
+    class Meta:
+        ordering = ['bought_date']
+
+class ClosedTrade(models.Model):
+    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='closed_trades')
+    symbol = models.CharField(max_length=10)
+    quantity = models.PositiveIntegerField(default=1, blank=True)
+    buy_price = models.FloatField()
+    bought_date = models.DateTimeField(blank=True, null=True)
+    sell_price = models.FloatField()
+    sell_date = models.DateTimeField(auto_now_add=True)
+    p_and_l = models.FloatField(blank=True, null=True, editable=False)
+
+    def save(self,*args, **kwargs):
+        '''Calculating p&l on trade manually'''
+        try:
+            self.p_and_l = self.buy_price - self.sell_price
+        except ValueError:
+            self.p_and_l = 0
+        return super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['sell_date']
+
+

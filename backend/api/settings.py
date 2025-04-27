@@ -84,7 +84,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'api.wsgi.application'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ('knox.auth.TokenAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': ('knox.auth.TokenAuthentication','rest_framework.authentication.SessionAuthentication',),
 }
 
 

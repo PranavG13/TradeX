@@ -31,7 +31,7 @@ function PaperTrading() {
 
   const fetchSymbolPrice = async (symbol) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/price/${symbol}`);
+      const response = await axios.get(`http://localhost:5001/api/price/${symbol}`);
       return response.data.price;
     } catch (error) {
       console.error(`Error fetching price for ${symbol}:`, error);
@@ -42,7 +42,7 @@ function PaperTrading() {
   const fetchStockDetails = async (symbol) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/details/${symbol}`);
+      const response = await axios.get(`http://localhost:5001/api/details/${symbol}`);
       setStockDetails(response.data);
     } catch (error) {
       console.error('Error fetching stock details:', error);
@@ -245,7 +245,7 @@ function PaperTrading() {
       ]));
   
       const pricePromises = symbols.map(symbol => 
-        axios.get(`http://localhost:5000/api/price/${symbol}`)
+        axios.get(`http://localhost:5001/api/price/${symbol}`)
       );
   
       const responses = await Promise.all(pricePromises);

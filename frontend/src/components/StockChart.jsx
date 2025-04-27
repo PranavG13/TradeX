@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { createChart, CrosshairMode, LineSeries, CandlestickSeries } from 'lightweight-charts';
 import { SMA, EMA, RSI, MACD } from "technicalindicators";
 import axios from "axios";
+import AxiosInstance from "./AxiosInstance";
 
 const StockChart = () => {
-    const [symbol, setSymbol] = useState("INFY.NS");
+    const { inputSymbol } = useParams();
+    const [symbol, setSymbol] = useState(inputSymbol || "INFY.NS");
     const [ohlc, setOhlc] = useState(null);
     const [intervalId, setIntervalId] = useState(null);
     const [resolution, setResolution] = useState("daily");
@@ -243,7 +246,8 @@ if (indicators.macd) {
 
     const fetchData = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/stock/${symbol}?resolution=${resolution}`);
+            // const res = await axios.get(`http://localhost:5000/stock/${symbol}?resolution=${resolution}`);
+            const res = await AxiosInstance.get(`/stock/${symbol}?resolution=${resolution}`);
             const data = res.data;
 
             setMarketOpen(data.market_open);
@@ -308,7 +312,8 @@ if (indicators.macd) {
         try {
             setIsLoading(true)
             setIsError(false)
-            const res = await axios.get(`http://localhost:5000/historical/${symbol}?resolution=${resolution}`);
+            // const res = await axios.get(`http://localhost:5000/historical/${symbol}?resolution=${resolution}`);
+            const res = await AxiosInstance.get(`/historical/${symbol}?resolution=${resolution}`);
             const fetchedHist = res.data;
             console.log(`length of history fetched: ${fetchedHist.length}`);
             setIsLoading(false)

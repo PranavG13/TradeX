@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+import AxiosInstance from '../AxiosInstance';
+import React from 'react';
+import "./PaperTrading.css";
+import { useNavigate } from 'react-router-dom';
 
 function PaperTrading() {
   const [balance, setBalance] = useState(100000);
@@ -11,7 +15,7 @@ function PaperTrading() {
   const [portfolio, setPortfolio] = useState([]);
   const [history, setHistory] = useState([]);
   const [prices, setPrices] = useState({});
-  const [stockDetails, setStockDetails] = useState(null);
+  const [stockDetails, setStockDetails] = useState({});
   const [amountInvested, setAmountInvested] = useState(0);
   const [totalPNL, setTotalPNL] = useState(0);
   const [currentValue, setCurrentValue] = useState(0);
@@ -23,6 +27,8 @@ function PaperTrading() {
   const balanceRef = useRef(balance);
   const pricesRef = useRef(prices);
 
+  const navigate = useNavigate();
+
   // Update refs when state changes
   useEffect(() => { portfolioRef.current = portfolio; }, [portfolio]);
   useEffect(() => { historyRef.current = history; }, [history]);
@@ -31,7 +37,8 @@ function PaperTrading() {
 
   const fetchSymbolPrice = async (symbol) => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/price/${symbol}`);
+      // const response = await axios.get(`http://localhost:5001/api/price/${symbol}`);
+      const response = await AxiosInstance.get(`api/price/${symbol}`);
       return response.data.price;
     } catch (error) {
       console.error(`Error fetching price for ${symbol}:`, error);
@@ -42,7 +49,8 @@ function PaperTrading() {
   const fetchStockDetails = async (symbol) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`http://localhost:5001/api/details/${symbol}`);
+      // const response = await axios.get(`http://localhost:5001/api/details/${symbol}`);
+      const response = await AxiosInstance.get(`api/details/${symbol}`);
       setStockDetails(response.data);
     } catch (error) {
       console.error('Error fetching stock details:', error);
@@ -51,6 +59,29 @@ function PaperTrading() {
       setIsLoading(false);
     }
   };
+
+  const placeTradeSubmitHandler = (e) => {
+    e.preventDefault()
+
+    const data = {
+      symbol : selectedSymbol.toUpperCase(),
+      quantity: parseFloat(quantity),
+      stoploss: stoploss ? parseFloat(stoploss) : null,
+      takeprofit: takeprofit ? parseFloat(takeprofit) : null,
+      buy_price: stockDetails.price,
+    }
+    console.log(`placing trade: ${data}`);
+    AxiosInstance.post(
+      `open-trades/`,
+      data
+    )
+    .then((response) => {
+      console.log('Trade created successfully', response.data);
+    })
+    .catch((error) => {
+      console.error("error opening trade", error);
+    })
+  }
 
   const getCurrentPrice = (symbol) => {
     const upperSymbol = symbol.toUpperCase();
@@ -245,7 +276,8 @@ function PaperTrading() {
       ]));
   
       const pricePromises = symbols.map(symbol => 
-        axios.get(`http://localhost:5001/api/price/${symbol}`)
+        // axios.get(`http://localhost:5001/api/price/${symbol}`)
+        AxiosInstance.get(`api/price/${symbol}`)
       );
   
       const responses = await Promise.all(pricePromises);
@@ -292,6 +324,7 @@ function PaperTrading() {
     return () => clearInterval(interval);
   }, []);
 
+  // Updates price every 5 seconds by calling api
   useEffect(() => {
     const priceInterval = setInterval(async () => {
       const updatedPrices = await fetchPrices();
@@ -306,221 +339,13 @@ function PaperTrading() {
   return (
     <>
       <div className="dashboard">
-        <style>
-          {`
-          .dashboard {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            color: #333;
-            background-color: #f5f7fa;
-          }
-
-          h1, ._h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-          }
-
-          h1 {
-            font-size: 28px;
-            text-align: center;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-          }
-
-          ._h2 {
-            font-size: 22px;
-            margin-top: 30px;
-          }
-
-          .bold {
-            font-weight: bold;
-          }
-
-          .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-          }
-
-          .card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          }
-
-          .card p {
-            margin: 10px 0;
-            font-size: 16px;
-          }
-
-          ._button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-            margin: 5px 0;
-          }
-
-          ._button:hover:not(:disabled) {
-            background-color: #2980b9;
-          }
-
-          ._button:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-          }
-
-          .reset-button {
-            background-color: #e74c3c;
-            margin-bottom: 20px;
-          }
-
-          .reset-button:hover:not(:disabled) {
-            background-color: #c0392b;
-          }
-
-          .symbol-search, .trade-form {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-          }
-
-          .search-controls {
-            display: flex;
-            gap: 10px;
-          }
-
-          input, select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            flex: 1;
-          }
-
-          input:focus, select:focus {
-            outline: none;
-            border-color: #3498db;
-          }
-
-          .trade-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-          }
-
-          .form-group {
-            display: flex;
-            flex-direction: column;
-          }
-
-          .form-group label {
-            margin-bottom: 5px;
-            font-weight: 500;
-          }
-
-          .table-container {
-            overflow-x: auto;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-          }
-
-          th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-          }
-
-          th {
-            background-color: #3498db;
-            color: white;
-            font-weight: 500;
-          }
-
-          tr:hover {
-            background-color: #f5f5f5;
-          }
-
-          .side {
-            font-weight: bold;
-            text-transform: uppercase;
-          }
-
-          .side.buy {
-            color: #27ae60;
-          }
-
-          .side.sell {
-            color: #e74c3c;
-          }
-
-          .positive {
-            color: #27ae60;
-            font-weight: 500;
-          }
-
-          .negative {
-            color: #e74c3c;
-            font-weight: 500;
-          }
-
-          .no-trades, .no-history {
-            text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
-            font-style: italic;
-          }
-
-          .stock-details {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-          }
-
-          .details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-          }
-
-          @media (max-width: 768px) {
-            .summary-cards, .trade-options, .details-grid {
-              grid-template-columns: 1fr;
-            }
-            
-            .search-controls {
-              flex-direction: column;
-            }
-          }
-          `}
-        </style>
+        
 
         <h1>Paper Trading</h1>
 
         <div className="summary-cards">
           <div className="card">
             <p>💰 Balance: <span className="bold">${balance.toFixed(2)}</span></p>
-            <p>📉 {selectedSymbol} Price: <span className="bold">${getCurrentPrice(selectedSymbol).toFixed(2)}</span></p>
           </div>
           <div className="card">
             <p>💸 Amount Invested: <span className="bold">${amountInvested.toFixed(2)}</span></p>
@@ -573,9 +398,16 @@ function PaperTrading() {
                 </span>
               </p>
             </div>
+            <div className='flex justify-center items-center py-5'>
+              <button 
+                className='text-white px-4 py-2 text-center bg-green-600 rounded-md text-sm'
+                onClick={() => {navigate(`/stockchart/${selectedSymbol}`)}}
+              >View Chart</button>
+              </div>
           </div>
         )}
 
+        <form onSubmit={placeTradeSubmitHandler}>
         <div className="trade-form">
           <h2 className='_h2'>Place Trade</h2>
           <div className="trade-options">
@@ -599,6 +431,7 @@ function PaperTrading() {
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 disabled={isLoading}
+                
               />
             </div>
             <div className="form-group">
@@ -610,6 +443,7 @@ function PaperTrading() {
                 onChange={(e) => setStoploss(e.target.value)}
                 disabled={isLoading}
                 placeholder={side === 'buy' ? 'Below current price' : 'Above current price'}
+                
               />
             </div>
             <div className="form-group">
@@ -621,17 +455,19 @@ function PaperTrading() {
                 onChange={(e) => setTakeprofit(e.target.value)}
                 disabled={isLoading}
                 placeholder={side === 'buy' ? 'Above current price' : 'Below current price'}
+                
               />
             </div>
           </div>
           <button
           className='_button'
-            onClick={placeTrade}
+            type='submit'
             disabled={isLoading || !selectedSymbol || !quantity}
           >
             {isLoading ? 'Processing...' : 'Place Trade'}
           </button>
         </div>
+        </form>
 
         <div className="open-trades">
           <h2 className='_h2'>Open Trades ({portfolio.length})</h2>

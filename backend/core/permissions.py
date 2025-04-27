@@ -5,6 +5,7 @@ class IsOwner(permissions.BasePermission):
     '''
 
     def has_object_permission(self, request, view, obj):
-        print(f'requested user: {request.user.email}, object owner: {obj.owner}')
-        print(f'is owner: {obj.owner == request.user.email}')
+        if request.method == 'POST':
+            return True
+
         return obj.owner == request.user

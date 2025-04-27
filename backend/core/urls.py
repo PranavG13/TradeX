@@ -1,5 +1,7 @@
 from django.urls import path, include
 from .views import *
+from .papertrading_apiendpoints import *
+from .charts_apiendpoints import *
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -15,4 +17,11 @@ router.register(r'users', UserViewSet, basename='customuser')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # paper-trading api end points
+    path('api/price/<str:symbol>/', get_price, name='get-price'),
+    path('api/details/<str:symbol>', stock_details, name='get-stock-detail'),
+    # charts api end points
+    path('historical/<str:symbol>', get_historical, name='get-historical'),
+    path('stock/<str:symbol>', get_live_stock, name='get-live-stock'),
+    path('api/latest/<str:symbol>', get_latest, name='get-latest'),
 ]

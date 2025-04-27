@@ -2,7 +2,7 @@ import React from "react";
 import { Routes, Route } from 'react-router-dom'
 import StockChart from "./components/StockChart";
 import Home from "./components/Home/Home";
-import PaperTrading from "./components/PaperTrading";
+import PaperTrading from "./components/PaperTrading/PaperTrading";
 import PageNotFound from "./components/PageNotFound/PageNotFound";
 import Layout from "./Layout";
 import Login from "./components/Login/Login";
@@ -17,7 +17,7 @@ function App() {
                     {/* All Protected Routes must go in here  */}
                     <Route path="/" element={<Layout  />}>
                         <Route path="" element={<Home />} />
-                        <Route  path="stockchart/" element={<StockChart />} />
+                        <Route  path="stockchart/:inputSymbol" element={<StockChart />} />
                         <Route  path="papertrading/" element={<PaperTrading />} />
                     </Route>
                 </Route>

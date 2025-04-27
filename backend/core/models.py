@@ -28,6 +28,9 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = [] # any required field other than username and password
 
     # ADD Additional fields for user Profiling
+    balance = models.FloatField(default=100000, blank=True)
+    amount_invested = models.FloatField(default=0, blank=True)
+    user_p_and_l = models.FloatField(default=0, blank=True)
 
 class OpenTrade(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='open_trades')

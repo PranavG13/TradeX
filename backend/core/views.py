@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from rest_framework import viewsets, permissions, mixins
+from rest_framework import viewsets, permissions
 from .serializers import *
 from .models import *
 from rest_framework.response import Response
@@ -20,6 +19,7 @@ class LoginViewset(viewsets.ViewSet):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
+            print(f"email: {email}, password: {password}")
 
             user = authenticate(request, email=email, password=password)
 
@@ -113,5 +113,3 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     '''provides `list` and `retrieve` actions.'''
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-        

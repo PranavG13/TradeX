@@ -9,9 +9,14 @@ function PaperTrading() {
   const [balance, setBalance] = useState(100000);
   const [selectedSymbol, setSelectedSymbol] = useState('BTC-USD');
   const [quantity, setQuantity] = useState(0.001);
-  const [side, setSide] = useState('buy');
   const [stoploss, setStoploss] = useState('');
   const [takeprofit, setTakeprofit] = useState('');
+  const [userDetails, setUserDetails] = useState(null);
+  const [openTradesPrices, setOpenTradesPrices] = useState({});
+  const [isLoadingOpenTradePrices, setIsLoadingOpenTradePrices] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [side, setSide] = useState('buy'); // to be removed
   const [portfolio, setPortfolio] = useState([]);
   const [history, setHistory] = useState([]);
   const [prices, setPrices] = useState({});
@@ -20,7 +25,6 @@ function PaperTrading() {
   const [totalPNL, setTotalPNL] = useState(0);
   const [currentValue, setCurrentValue] = useState(0);
   const [percentPNL, setPercentPNL] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
 
   const portfolioRef = useRef(portfolio);
   const historyRef = useRef(history);
@@ -57,6 +61,16 @@ function PaperTrading() {
       setStockDetails(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchUserDetails = async () => {
+    try{
+      const response = await AxiosInstance.get(`users/me`);
+      console.log("fetched user details", response.data);
+      setUserDetails(response.data);
+    } catch(error) {
+      console.error('Error fetching user details:', error);
     }
   };
 
@@ -310,10 +324,15 @@ function PaperTrading() {
     }
   };
 
+  // initializes and checks stop condition every 10 sec
   useEffect(() => {
     const initialize = async () => {
+      setIsLoading(true);
+      await fetchUserDetails();
       await fetchPrices();
       loadStorage();
+      setIsLoading(false);
+      console.log('loading is done');
     };
     initialize();
 
@@ -324,7 +343,7 @@ function PaperTrading() {
     return () => clearInterval(interval);
   }, []);
 
-  // Updates price every 5 seconds by calling api
+  // Updates price every 5 sec in the portfolio
   useEffect(() => {
     const priceInterval = setInterval(async () => {
       const updatedPrices = await fetchPrices();
@@ -336,6 +355,39 @@ function PaperTrading() {
     return () => clearInterval(priceInterval);
   }, []);
 
+  useEffect(() => {
+    if(!userDetails || !userDetails.open_trades) return;
+
+    const fetchPrices = async () => {
+      try{
+        const updatedPrices = {};
+
+        await Promise.all(userDetails.open_trades.map(async (trade) => {
+          const symbol = trade.symbol.toUpperCase();
+          const price = await fetchSymbolPrice(symbol);
+
+          if(price !== null){
+            updatedPrices[symbol] = price;
+          }
+        }));
+
+        setOpenTradesPrices(updatedPrices);
+        setIsLoadingOpenTradePrices(false);
+      } catch(error) {
+        console.error("Error fetching live prices", error)
+        setIsLoadingOpenTradePrices(false);
+      }
+    };
+
+    fetchPrices();
+
+    const intervalId = setInterval(() => {
+      fetchPrices();
+    }, 20000); // fetch every 20 sec
+
+    return () => clearInterval(intervalId);
+  }, [userDetails])
+
   return (
     <>
       <div className="dashboard">
@@ -345,10 +397,10 @@ function PaperTrading() {
 
         <div className="summary-cards">
           <div className="card">
-            <p>💰 Balance: <span className="bold">${balance.toFixed(2)}</span></p>
+            <p>💰 Balance: <span className="bold">{isLoading?'Loading': `$${userDetails.balance.toFixed(2)}`}</span></p>
           </div>
           <div className="card">
-            <p>💸 Amount Invested: <span className="bold">${amountInvested.toFixed(2)}</span></p>
+            <p>💸 Amount Invested: <span className="bold">{isLoading?'Loading': `$${userDetails.amount_invested.toFixed(2)}`}</span></p>
           </div>
           {/*<div className="card">
             <p>📊 Current Value: <span className="bold">${currentValue.toFixed(2)}</span></p>
@@ -469,105 +521,105 @@ function PaperTrading() {
         </div>
         </form>
 
-        <div className="open-trades">
-          <h2 className='_h2'>Open Trades ({portfolio.length})</h2>
-          {portfolio.length === 0 ? (
-            <p className="no-trades">No open trades</p>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Side</th>
-                    <th>Qty</th>
-                    <th>Entry</th>
-                    <th>Current</th>
-                    <th>Stoploss</th>
-                    <th>Takeprofit</th>
-                    <th>P&L</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {portfolio.map(trade => {
-                    const currentPrice = getCurrentPrice(trade.symbol);
-                    const pnl = trade.side === 'buy'
-                      ? (currentPrice - trade.entry_price) * trade.quantity
-                      : (trade.entry_price - currentPrice) * trade.quantity;
+        {!isLoading && 
+          <div className="open-trades">
+            <h2 className='_h2'>Open Trades {userDetails.open_trades.length}</h2>
+            {userDetails.open_trades.length === 0 ? (
+              <p className="no-trades">No open trades</p>
+            ) : (
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Qty</th>
+                      <th>Entry</th>
+                      <th>Current</th>
+                      <th>Stoploss</th>
+                      <th>Takeprofit</th>
+                      <th>P&L</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userDetails.open_trades.map(trade => {
+                      const currentPrice = isLoadingOpenTradePrices? 0 : openTradesPrices[trade.symbol];
+                      const pnl = (currentPrice - trade.buy_price) * trade.quantity;
 
-                    return (
+                      return (
+                        <tr key={trade.id}>
+                          <td>{trade.symbol}</td>
+                          <td>{trade.quantity.toFixed(4)}</td>
+                          <td>${trade.buy_price.toFixed(2)}</td>
+                          <td>${currentPrice.toFixed(2)}</td>
+                          <td>
+                            {trade.stoploss ? `$${trade.stoploss.toFixed(2)}` : '-'}
+                          </td>
+                          <td>
+                            {trade.takeprofit ? `$${trade.takeprofit.toFixed(2)}` : '-'}
+                          </td>
+                          <td className={pnl >= 0 ? 'positive' : 'negative'}>
+                            ${pnl.toFixed(2)}
+                          </td>
+                          <td>
+                            <button
+                              onClick={() => closeTrade(trade.id)}
+                              className='_button'
+                              disabled={isLoading}
+                            >
+                              Close
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        }
+
+        {!isLoading && 
+          <div className="history">
+            <h2 className='_h2'>Trade History ({userDetails.closed_trades.length})</h2>
+            {userDetails.closed_trades.length === 0 ? (
+              <p className="no-history">No trade history</p>
+            ) : (
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Qty</th>
+                      <th>Entry</th>
+                      <th>Exit</th>
+                      <th>P&L</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userDetails.closed_trades.map((trade) => (
                       <tr key={trade.id}>
                         <td>{trade.symbol}</td>
-                        <td className={`side ${trade.side}`}>{trade.side}</td>
-                        <td>{trade.quantity.toFixed(4)}</td>
-                        <td>${trade.entry_price.toFixed(2)}</td>
-                        <td>${currentPrice.toFixed(2)}</td>
-                        <td>
-                          {trade.stoploss ? `$${trade.stoploss.toFixed(2)}` : '-'}
+                        <td>{Number(trade.quantity).toFixed(4)}</td>
+                        <td>${trade.buy_price.toFixed(2)}</td>
+                        <td>${trade.sell_price.toFixed(2)}</td>
+                        <td className={trade.p_and_l >= 0 ? 'positive' : 'negative'}>
+                          ${trade.p_and_l.toFixed(2)}
                         </td>
-                        <td>
-                          {trade.takeprofit ? `$${trade.takeprofit.toFixed(2)}` : '-'}
-                        </td>
-                        <td className={pnl >= 0 ? 'positive' : 'negative'}>
-                          ${pnl.toFixed(2)}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => closeTrade(trade.id)}
-                            className='_button'
-                            disabled={isLoading}
-                          >
-                            Close
-                          </button>
-                        </td>
+                        <td>{new Date(trade.sell_date).toLocaleString()}</td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        }
 
-        <div className="history">
-          <h2 className='_h2'>Trade History ({history.length})</h2>
-          {history.length === 0 ? (
-            <p className="no-history">No trade history</p>
-          ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Side</th>
-                    <th>Qty</th>
-                    <th>Entry</th>
-                    <th>Exit</th>
-                    <th>P&L</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.slice().reverse().map((trade, index) => (
-                    <tr key={index}>
-                      <td>{trade.symbol}</td>
-                      <td className={`side ${trade.side}`}>{trade.side}</td>
-                      <td>{Number(trade.quantity).toFixed(4)}</td>
-                      <td>${trade.entry_price.toFixed(2)}</td>
-                      <td>${trade.exit_price.toFixed(2)}</td>
-                      <td className={trade.pnl >= 0 ? 'positive' : 'negative'}>
-                        ${trade.pnl.toFixed(2)}
-                      </td>
-                      <td>{new Date(trade.timestamp).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </div>
+
     </>
   );
 }

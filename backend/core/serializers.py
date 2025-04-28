@@ -41,4 +41,4 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'open_trades', 'closed_trades']
+        fields = ['id', 'email','balance', 'amount_invested', 'user_p_and_l', 'open_trades', 'closed_trades']

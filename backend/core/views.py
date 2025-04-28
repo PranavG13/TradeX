@@ -113,3 +113,10 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     '''provides `list` and `retrieve` actions.'''
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    '''creates an additional endpoint /users/me to access particular user details'''
+    @action(detail=False, methods=['GET'])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)

@@ -1,15 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import AxiosInstance from '../AxiosInstance';
 import React from 'react';
 import "./PaperTrading.css";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 function PaperTrading() {
   // states for place trade form
   const [quantity, setQuantity] = useState(0.001);
-  const [stoploss, setStoploss] = useState('');
-  const [takeprofit, setTakeprofit] = useState('');
+  const [stoploss, setStoploss] = useState(null);
+  const [takeprofit, setTakeprofit] = useState(null);
   const [isLoadingPlaceTrade, setIsLoadingPlaceTrade] = useState(false);
   const [errorPlaceTrade, setErrorPlaceTrade] = useState(false);
 
@@ -29,10 +28,17 @@ function PaperTrading() {
   const [getDetailsPressed, setGetDetailsPressed] = useState(true);
   const [isLoadingStockDetails, setIsLoadingStockDetails] = useState(true);
   const [errorStockDetails, setErrorStockDetails] = useState(false);
+
+  //states for reset Balance
+  const [isLoadingResetBalance, setIsLoadingResetBalance] = useState(false);
+  const [errorResetBalance, setErrorResetBalance] = useState(false);
   
-  const [isLoading, setIsLoading] = useState(true);
+  // states for close trade
+  const [isLoadingCloseTrade, setIsLoadingCloseTrade] = useState(false);
+  const [errorCloseTrade, setErrorCloseTrade] = useState(false);
   
   // might use later
+  const [isLoading, setIsLoading] = useState(true);
   const [balance, setBalance] = useState(100000);
   const [amountInvested, setAmountInvested] = useState(0);
   const [totalPNL, setTotalPNL] = useState(0);
@@ -60,6 +66,7 @@ function PaperTrading() {
 
     const fetchPrices = async () => {
       try{
+        setIsLoadingOpenTradePrices(true);
         const updatedPrices = {};
 
         await Promise.all(userDetails.open_trades.map(async (trade) => {
@@ -157,7 +164,40 @@ function PaperTrading() {
   
   const placeTradeSubmitHandler = (e) => {
     e.preventDefault()
+    if(errorStockDetails) {
+      console.log("enter a valid stock symbol")
+      return;
+    }
 
+    let data = {
+      "symbol" : selectedSymbol,
+      "quantity": quantity,
+    }
+
+    if(stoploss){
+      data = {...data, "stoploss":stoploss}
+    }
+    if(takeprofit){
+      data = {...data, "takeprofit":takeprofit}
+    }
+    const placeTradeCall = async () => {
+      try{
+        setIsLoadingPlaceTrade(true);
+        setErrorPlaceTrade(false);
+        const response = await AxiosInstance.post(`open-trades/`, data);
+        if (response.status !== 201){
+          throw new Error("failed to place trade");
+        }
+        await fetchUserDetails();// refetching updated user details
+      } catch(e) {
+        setErrorPlaceTrade(true);
+        console.log("error occurred while placing trade", e);
+      } finally {
+        setIsLoadingPlaceTrade(false);
+      }
+    };
+
+    placeTradeCall();
   }
 
 
@@ -169,12 +209,47 @@ function PaperTrading() {
     
   };
 
-  const closeTrade = (id, currentPrice = null) => {
-    
+  const closeTrade = (id) => {
+    const closeTradeCall = async (id) => {
+      try{
+        setIsLoadingCloseTrade(true);
+        setErrorCloseTrade(false);
+        const response = await AxiosInstance.post(`open-trades/${id}/close_trade/`);
+        if(response.status !== 200){
+          throw new Error("failed to close trade");
+        }
+        fetchUserDetails(); // refetching updated user details
+      } catch(e) {
+        setErrorCloseTrade(true);
+        console.log("Error while closing trade", e);
+      }
+      finally {
+        setIsLoadingCloseTrade(false);
+      }
+    };
+
+    closeTradeCall(id);
   };
 
   const resetBalance = () => {
-    
+    const resetBalanceCall = async () => {
+      try{
+        setIsLoadingResetBalance(true);
+        setErrorResetBalance(false);
+        const response = await AxiosInstance.delete(`users/reset_balance/`);
+        if (response.status != 200){
+          throw new Error("failed to reset balance");
+        } 
+        fetchUserDetails(); // refetching updated user details
+      } catch(e) {
+        setErrorResetBalance(true);
+        console.log('error while resetting balance', response.data.error)
+      }
+      finally {
+        setIsLoadingResetBalance(false);
+      }
+    }
+    resetBalanceCall();
   };
 
 
@@ -202,11 +277,12 @@ function PaperTrading() {
         <button 
           onClick={resetBalance} 
           className="_button reset-button "
-          disabled={isLoadingUserDetails}
+          disabled={isLoadingUserDetails || isLoadingResetBalance}
         >
-          {isLoadingUserDetails ? 'Loading...' : 'Reset Balance'}
+          {isLoadingUserDetails || isLoadingResetBalance ? 'Loading...' : 'Reset Balance'}
         </button>
-
+        {errorResetBalance && <div className='flex justify-center items-center'><h2 className='_h2 text-red-600 text-center'>Error in Reset Balance</h2></div>}
+        
         <div className="symbol-search">
           <h2 className='_h2'>Search for Symbol</h2>
           <div className="search-controls">
@@ -276,8 +352,8 @@ function PaperTrading() {
                 <input
                   type="number"
                   step="0.01"
-                  value={stoploss}
-                  onChange={(e) => setStoploss(e.target.value)}
+                  value={stoploss? stoploss : ""}
+                  onChange={(e) => setStoploss(Number(e.target.value))}
                   disabled={isLoadingPlaceTrade}
                   placeholder='Below current price'
                   
@@ -288,18 +364,27 @@ function PaperTrading() {
                 <input
                   type="number"
                   step="0.01"
-                  value={takeprofit}
-                  onChange={(e) => setTakeprofit(e.target.value)}
+                  value={takeprofit? takeprofit : ""}
+                  onChange={(e) => setTakeprofit(Number(e.target.value))}
                   disabled={isLoadingPlaceTrade}
                   placeholder='Above current price'
                   
+                />
+              </div>
+              <div className='form-group'>
+                <label>Amount Required</label>
+                <input
+                  type="number"
+                  value={(quantity * stockDetails.price).toFixed(4)}
+                  disabled = "true"
+                  className={!userDetails ? "" : (quantity * stockDetails.price > userDetails.balance)?"negative" : "positive"}
                 />
               </div>
             </div>
             <button
             className='_button'
               type='submit'
-              disabled={isLoadingPlaceTrade || !selectedSymbol || !quantity}
+              disabled={isLoadingPlaceTrade || !selectedSymbol || !quantity || !userDetails || (quantity * stockDetails.price > userDetails.balance)}
             >
               {isLoadingPlaceTrade ? 'Processing...' : 'Place Trade'}
             </button>
@@ -335,12 +420,14 @@ function PaperTrading() {
                     </thead>
                     <tbody>
                       {userDetails.open_trades.map(trade => {
-                        const currentPrice = isLoadingOpenTradePrices? 0 : openTradesPrices[trade.symbol];
+                        const currentPrice = isLoadingOpenTradePrices? 0 : (openTradesPrices[trade.symbol]? openTradesPrices[trade.symbol] : 0);
                         const pnl = (currentPrice - trade.buy_price) * trade.quantity;
 
                         return (
                           <tr key={trade.id}>
-                            <td>{trade.symbol}</td>
+                            <td>
+                              <Link to={`/stockchart/${trade.symbol}`} className="text-blue-600 underline hover:text-blue-800">{trade.symbol}</Link>
+                            </td>
                             <td>{trade.quantity.toFixed(4)}</td>
                             <td>${trade.buy_price.toFixed(2)}</td>
                             <td>${currentPrice.toFixed(2)}</td>
@@ -357,7 +444,7 @@ function PaperTrading() {
                               <button
                                 onClick={() => closeTrade(trade.id)}
                                 className='_button'
-                                disabled={isLoading}
+                                disabled={isLoadingCloseTrade}
                               >
                                 Close
                               </button>
@@ -369,6 +456,8 @@ function PaperTrading() {
                   </table>
                 </div>
               )}
+              {errorCloseTrade && <div className='flex justify-center items-center'><h2 className='_h2 text-red-600 text-center'>Error closing Trade</h2></div>}
+              
             </div>
           )
         }
@@ -389,7 +478,7 @@ function PaperTrading() {
                         <th>Entry</th>
                         <th>Exit</th>
                         <th>P&L</th>
-                        <th>Date</th>
+                        <th>Close Date</th>
                       </tr>
                     </thead>
                     <tbody>

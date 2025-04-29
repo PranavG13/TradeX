@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from django.contrib.auth import get_user_model, authenticate
 from knox.models import AuthToken
 from core.permissions import IsOwner
+import yfinance as yf
 
 User = get_user_model()
 
@@ -73,33 +74,88 @@ class OpenTradeViewSet(viewsets.ModelViewSet):
     serializer_class = OpenTradeSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+    # def perform_create(self, serializer):
+    #     serializer.save(owner=self.request.user)
+
+    def create(self, request):
+        try:
+            symbol = request.data.get("symbol")
+            if not symbol:
+                return Response({"error":"symbol is invalid"},status=status.HTTP_400_BAD_REQUEST)
+            
+            stock = yf.Ticker(symbol)
+            hist = stock.history(period='1d', interval='1m')
+
+            if hist.empty:
+                return Response({"error": f"could not find price for symbol {symbol}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            current_price = round(hist["Close"].iloc[-1], 2)
+
+            amount_required = current_price * request.data.get('quantity')
+            user = request.user
+            if user.balance < amount_required:
+                return Response({"error": "Insufficient balance, cannot complete trade"}, status=status.HTTP_400_BAD_REQUEST)
+            
+
+            
+            data = request.data.copy()
+            data['buy_price'] = current_price
+
+            serializer = self.serializer_class(data = data)
+
+            if serializer.is_valid():
+                serializer.save(owner=request.user)
+                user.balance = user.balance - amount_required
+                user.amount_invested  = user.amount_invested + amount_required
+                user.save()
+                return Response({
+                    "message":"new trade opened",
+                    "trade": serializer.data 
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            print(f'Error : {str(e)}')
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(methods=['POST'], detail=True)
     def close_trade(self, request, pk=None, *args, **kwargs):
         try:
             open_trade = self.get_object()
-            close_price = request.data.get('close_price')
-
-            if close_price is None:
-                return Response({'error': 'close_price is required'}, status=status.HTTP_400_BAD_REQUEST)
+            symbol = open_trade.symbol
+            stock = yf.Ticker(symbol)
+            hist = stock.history(period='1d', interval='1m')
+            if not hist.empty:
+                current_price = round(hist["Close"].iloc[-1], 2)
+            else:
+                return Response({"error": f"could not find price for symbol {symbol}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = request.user
+            user.user_p_and_l = user.user_p_and_l + ((current_price - open_trade.buy_price) * open_trade.quantity)
+            user.balance = user.balance + (current_price * open_trade.quantity)
+            user.save()
             
             ClosedTrade.objects.create(
                 owner = open_trade.owner,
                 symbol = open_trade.symbol,
                 quantity = open_trade.quantity,
                 buy_price = open_trade.buy_price,
-                sell_price = close_price,
+                sell_price = current_price,
                 bought_date = open_trade.bought_date
             )
 
             open_trade.delete()
 
-            return Response({'status': 'Trade Successfully Closed'}, status=status.HTTP_200_OK)
+            return Response({
+                'message': 'Trade Successfully Closed',
+                'symbol': symbol,
+                'sell_price': current_price
+            }, status=status.HTTP_200_OK)
         
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            print(f'error in close trade: {str(e)}')
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ClosedTradeViewSet(viewsets.ModelViewSet):
     queryset = ClosedTrade.objects.all()
@@ -120,3 +176,25 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+    
+    '''endpoint to clear balance /users/reset_balance'''
+    @action(detail=False, methods=['DELETE'])
+    def reset_balance(self, request):
+        user = request.user
+        try:
+
+            OpenTrade.objects.filter(owner=user).delete()
+            ClosedTrade.objects.filter(owner=user).delete()
+
+            user.balance = 100000
+            user.amount_invested = 0
+            user.user_p_and_l = 0
+
+            user.save()
+            return Response({
+                "message": "balance reset successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f'error occurred while resetting: {e}')
+            return Response({"error" : "error reset balance UNSUCCESSFUL"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

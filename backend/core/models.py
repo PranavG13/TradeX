@@ -35,7 +35,7 @@ class CustomUser(AbstractUser):
 class OpenTrade(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='open_trades')
     symbol = models.CharField(max_length=10)
-    quantity = models.PositiveIntegerField(default=1, blank=True)
+    quantity = models.FloatField(default=0.001, blank=True)
     buy_price = models.FloatField()
     bought_date = models.DateTimeField(auto_now_add=True)
     current_price = models.FloatField(blank=True, null=True)
@@ -48,7 +48,7 @@ class OpenTrade(models.Model):
 class ClosedTrade(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='closed_trades')
     symbol = models.CharField(max_length=10)
-    quantity = models.PositiveIntegerField(default=1, blank=True)
+    quantity = models.FloatField(default=0.001, blank=True)
     buy_price = models.FloatField()
     bought_date = models.DateTimeField(blank=True, null=True)
     sell_price = models.FloatField()

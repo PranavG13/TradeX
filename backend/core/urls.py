@@ -3,6 +3,7 @@ from .views import *
 from .papertrading_apiendpoints import *
 from .charts_apiendpoints import *
 from .backtesting_apiendpoints import *
+from .recommendation_apiendpoints import *
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -26,5 +27,7 @@ urlpatterns = [
     path('stock/<str:symbol>', get_live_stock, name='get-live-stock'),
     path('api/latest/<str:symbol>', get_latest, name='get-latest'),
     # back-testing
-    path('api/backtesting', backtesting, name='backtesting')
+    path('api/backtesting', backtesting, name='backtesting'),
+    # recommendation
+    path('api/recommendation', recommendation, name='recommendation'),
 ]

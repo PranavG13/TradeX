@@ -1,4 +1,4 @@
-from utils import *
+from .utils import *
 import yfinance as yf
 from functools import partial
 

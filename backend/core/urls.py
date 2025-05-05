@@ -2,6 +2,7 @@ from django.urls import path, include
 from .views import *
 from .papertrading_apiendpoints import *
 from .charts_apiendpoints import *
+from .backtesting_apiendpoints import *
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -24,4 +25,6 @@ urlpatterns = [
     path('historical/<str:symbol>', get_historical, name='get-historical'),
     path('stock/<str:symbol>', get_live_stock, name='get-live-stock'),
     path('api/latest/<str:symbol>', get_latest, name='get-latest'),
+    # back-testing
+    path('api/backtesting', backtesting, name='backtesting')
 ]

@@ -1,22 +1,41 @@
 import React, { useEffect, useState } from "react";
-// import AxiosInstance from "../AxiosInstance";
+import AxiosInstance from "../AxiosInstance";
+import { useForm } from "react-hook-form";
 
 
 function Home() {
+  const [selectedSymbol, setSelectedSymbol] = useState('');
+  const [strategyText, setStrategyText] = useState('')
+  const [strategySymbol, setStrategySymbol] = useState('')
+  const [strategyInterval, setStrategyInterval] = useState('daily')
+    
+  const {
+          register,
+          handleSubmit,
+          formState: {errors},
+      } = useForm()
 
-    // A Way to get data from api
-    // const [data, setData] = useState({})
+    // a handler to handle back testing submission
+    const testStrategyHandler = (data) => {
+      console.log("form submitted", data);
+      // data = Object { strategySymbol: "BTC-USD", strategyInterval: "day", strategyText: "Text123" }
 
-    // const getData = () => {
-    //     AxiosInstance.get(`users/`).then((res) => {
-    //         setData(res.data)
-    //         console.log(res.data);
-    //     })
-    // }
-
-    // useEffect(() =>{
-    //     getData();
-    // }, [])
+      // posting data to api
+      // AxiosInstance.post(
+      //     `API-URL-FOR-BACK-TESTING/`,
+      //     {
+      //         data
+      //     }
+      // )
+      // .then((response) => {
+      //      HANDLE RESPONSE HERE
+      //     console.log(response);
+      //   
+      // })
+      // .catch((error) => {
+      //     console.error("error during strategy testing", error);
+      // })
+    }
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
@@ -26,7 +45,13 @@ function Home() {
           <div className="mb-6">
             <label htmlFor="symbol" className="block font-bold mb-2">Search for Symbol</label>
             <div className="flex space-x-2">
-              <input id="symbol" className="w-full p-2 border rounded bg-black text-white" defaultValue="BTC-USD" />
+              <input 
+                id="symbol" 
+                className="w-full p-2 border rounded bg-black text-white" 
+                placeholder="Enter Symbol"
+                onChange={(e) => setSelectedSymbol(e.target.value)} 
+                value={selectedSymbol}
+              />
               <button className="bg-blue-600 text-white px-4 py-2 rounded">Get Details</button>
             </div>
           </div>
@@ -39,33 +64,44 @@ function Home() {
             <p>24h Change: <span className="text-green-600">1.32%</span></p>
           </div>
     
-          {/* Test Strategy */}
-          <div className="p-4 bg-gray-100 rounded shadow mb-6">
-            <h2 className="font-bold mb-2">Test Strategy</h2>
-            {/* <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold mb-1">Side</label>
-                <select className="w-full p-2 border rounded">
-                  <option>Buy</option>
-                  <option>Sell</option>
+          {/* Test Strategy OR Back-testing */}
+          <form onSubmit={handleSubmit(testStrategyHandler)}>
+            <div className="p-4 bg-gray-100 rounded shadow mb-6">
+              <h2 className="font-bold mb-2">Test Strategy</h2>
+              <div className="my-4">
+                <label className="block font-semibold mb-1">Symbol</label>
+                <input 
+                  type="text" 
+                  id="strategy-symbol"
+                  className="w-[50%] p-2 border rounded bg-white"
+                  {...register("strategySymbol", {required: "Enter Symbol"})}
+                />
+                {errors.strategySymbol && <span className="text-sm text-red-600">{errors.strategySymbol.message}</span>}
+              </div>
+              <div className="my-4 ">
+                <label className="block font-semibold mb-1">Interval</label>
+                <select 
+                  className="w-[50%] p-2 border rounded bg-white" 
+                  {...register("strategyInterval", {required: "Select Interval"})}
+                >
+                  <option value={"day"}>day</option>
+                  <option value={"week"}>week</option>
+                  <option value={"month"}>month</option>
                 </select>
+                {errors.strategyInterval && <span className="text-sm text-red-600">{errors.strategyInterval.message}</span>}
               </div>
-              <div>
-                <label className="block font-semibold mb-1">Quantity</label>
-                <input type="number" className="w-full p-2 border rounded" defaultValue="0.1" />
+              <div className="my-4 ">
+                <label className="block font-semibold mb-1">Strategy</label>
+                <textarea
+                id="strategy-text"
+                className="w-full h-20 p-2 bg-white"
+                {...register("strategyText", {required: "Enter Strategy"})}
+                ></textarea>
+                {errors.strategyText && <span className="text-sm text-red-600">{errors.strategyText.message}</span>}
               </div>
-              <div>
-                <label className="block font-semibold mb-1">Stoploss (optional)</label>
-                <input className="w-full p-2 border rounded" placeholder="Below current price" />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Takeprofit (optional)</label>
-                <input className="w-full p-2 border rounded" placeholder="Above current price" />
-              </div>
-            </div> */}
-            <textarea name="" id="" className="w-full h-20 bg-white"></textarea><br />
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">Test Strategy</button>
-          </div>
+              <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded" type="submit">Test Strategy</button>
+            </div>
+          </form>
     
           {/* Related News Section */}
           <div className="p-4 bg-gray-100 rounded shadow">

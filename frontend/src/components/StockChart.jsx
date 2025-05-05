@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { createChart, CrosshairMode, LineSeries, CandlestickSeries } from 'lightweight-charts';
 import { SMA, EMA, RSI, MACD } from "technicalindicators";
-import axios from "axios";
 import AxiosInstance from "./AxiosInstance";
 
 const StockChart = () => {
@@ -247,6 +246,7 @@ if (indicators.macd) {
     const fetchData = async () => {
         try {
             // const res = await axios.get(`http://localhost:5000/stock/${symbol}?resolution=${resolution}`);
+            console.log("calling for symbol", symbol)
             const res = await AxiosInstance.get(`/stock/${symbol}?resolution=${resolution}`);
             const data = res.data;
 

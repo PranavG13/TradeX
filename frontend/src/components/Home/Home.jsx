@@ -5,9 +5,14 @@ import { useForm } from "react-hook-form";
 
 function Home() {
   const [selectedSymbol, setSelectedSymbol] = useState('');
-  const [strategyText, setStrategyText] = useState('')
-  const [strategySymbol, setStrategySymbol] = useState('')
-  const [strategyInterval, setStrategyInterval] = useState('daily')
+  const [getDetails, setGetDetails] = useState(false);
+
+  const [stockDetails, setStockDetails] = useState({});
+  const [errorStockDetails, setErrorStockDetails] = useState(false);
+  const [isLoadingStockDetails, setIsLoadingStockDetails] = useState(false);
+  // const [strategyText, setStrategyText] = useState('')
+  // const [strategySymbol, setStrategySymbol] = useState('')
+  // const [strategyInterval, setStrategyInterval] = useState('daily')
     
   const {
           register,
@@ -37,6 +42,46 @@ function Home() {
       // })
     }
 
+    const recommendationHandler = (data) => {
+      console.log("recommendation form submitted", data);
+      //data = Object {recommendationSymbol: "BTC-USD", recommendationInterval: "day/week/month"}
+    }
+
+    const fetchStockDetails = async (symbol, showLoading = true) => {
+      try {
+        if (showLoading) {
+          setIsLoadingStockDetails(true);
+          setErrorStockDetails(false);
+        }
+    
+        const response = await AxiosInstance.get(`api/details/${symbol}`);
+        setStockDetails(response.data);
+    
+      } catch (error) {
+        console.error('Error fetching stock details:', error);
+        if (showLoading) {
+          setErrorStockDetails(true);
+          setStockDetails(null);
+        }
+      } finally {
+        if (showLoading) {
+          setIsLoadingStockDetails(false);
+        }
+      }
+    };
+
+    useEffect(() => {
+      if(!selectedSymbol || selectedSymbol==="") return; // waits until selected symbol is not empty
+  
+      fetchStockDetails(selectedSymbol, true);
+      
+      const intervalId = setInterval(() => {
+        fetchStockDetails(selectedSymbol, false); // silent loading
+      }, 10000); // fetch every 7 sec
+      
+      return () => clearInterval(intervalId);
+    }, [getDetails])
+
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
           <h1 className="text-2xl font-bold text-center mb-6">TradeX</h1>
@@ -52,17 +97,30 @@ function Home() {
                 onChange={(e) => setSelectedSymbol(e.target.value)} 
                 value={selectedSymbol}
               />
-              <button className="bg-blue-600 text-white px-4 py-2 rounded">Get Details</button>
+              <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setGetDetails((prev) => prev=!prev)}>Get Details</button>
             </div>
           </div>
     
           {/* Stock Details */}
-          <div className="p-4 bg-gray-100 rounded shadow mb-6">
-            <h2 className="font-bold mb-2">Stock Details for BTC-USD</h2>
-            <p>Current Price: <strong>$88674.62</strong></p>
-            <p>Market Cap: <strong>1760604979200</strong></p>
-            <p>24h Change: <span className="text-green-600">1.32%</span></p>
-          </div>
+          {isLoadingStockDetails ? 
+            <div>Loading Stock Details for {selectedSymbol}</div> : 
+
+            (stockDetails===null ? 
+              <div>
+                <h2>Error Loading {selectedSymbol}</h2>
+              </div> :
+              <div className="p-4 bg-gray-100 rounded shadow mb-6">
+                <h2 className="font-bold mb-2">Stock Details for BTC-USD</h2>
+                <p>Current Price: <strong>{stockDetails.price}</strong></p>
+                <p>Market Cap: <strong>{stockDetails.marketCap}</strong></p>
+                <p><strong>24h Change:</strong> 
+                  <span className={stockDetails.change24h >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {stockDetails.change24h}%
+                  </span>
+                </p>
+              </div>
+            )
+          }
     
           {/* Test Strategy OR Back-testing */}
           <form onSubmit={handleSubmit(testStrategyHandler)}>
@@ -99,7 +157,36 @@ function Home() {
                 ></textarea>
                 {errors.strategyText && <span className="text-sm text-red-600">{errors.strategyText.message}</span>}
               </div>
-              <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded" type="submit">Test Strategy</button>
+              <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" type="submit">Test Strategy</button>
+            </div>
+          </form>
+          {/* Stock Recommendation */}
+          <form onSubmit={handleSubmit(recommendationHandler)}>
+            <div className="p-4 bg-gray-100 rounded shadow mb-6">
+              <h2 className="font-bold mb-2">Stock Recommendation</h2>
+              <div className="my-4">
+                <label className="block font-semibold mb-1">Symbol</label>
+                <input 
+                  type="text" 
+                  id="recommendation-symbol"
+                  className="w-[50%] p-2 border rounded bg-white"
+                  {...register("recommendationSymbol", {required: "Enter Symbol"})}
+                />
+                {errors.recommendationSymbol && <span className="text-sm text-red-600">{errors.recommendationSymbol.message}</span>}
+              </div>
+              <div className="my-4 ">
+                <label className="block font-semibold mb-1">Interval</label>
+                <select 
+                  className="w-[50%] p-2 border rounded bg-white" 
+                  {...register("recommendationInterval", {required: "Select Interval"})}
+                >
+                  <option value={"day"}>day</option>
+                  <option value={"week"}>week</option>
+                  <option value={"month"}>month</option>
+                </select>
+                {errors.recommendationInterval && <span className="text-sm text-red-600">{errors.recommendationInterval.message}</span>}
+              </div>
+              <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" type="submit">Get Recommendation</button>
             </div>
           </form>
     

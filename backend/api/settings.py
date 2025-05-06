@@ -54,9 +54,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+
+CORS_ALLOW_ALL_ORIGINS = True # --> STRICTLY ONLY IN DEVELOPMENT
+
+# USE THIS IN PRODUCTION
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+# ]
 
 AUTH_USER_MODEL = "core.CustomUser"
 

@@ -7,6 +7,7 @@ import pytz
 import time
 import yfinance as yf
 
+yf.set_tz_cache_location("./yf_cache")
 
 live_candles = {}
 

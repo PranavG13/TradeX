@@ -11,7 +11,6 @@ def backtesting(request):
         symbol = data.get('strategySymbol')
         interval = data.get('strategyInterval')
         code = data.get('strategyText')
-
     except Exception as e:
         print(f'exception : {e}')
         return Response({"error":"Invalid Data received"}, status=status.HTTP_400_BAD_REQUEST)

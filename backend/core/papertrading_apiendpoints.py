@@ -6,6 +6,8 @@ from rest_framework import status
 import yfinance as yf
 import datetime
 
+yf.set_tz_cache_location("./yf_cache")
+
 
 # Endpoint to get price for any symbol dynamically
 @api_view(['GET'])

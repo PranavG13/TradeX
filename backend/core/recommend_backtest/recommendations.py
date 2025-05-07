@@ -2,6 +2,8 @@ from .utils import *
 import yfinance as yf
 from functools import partial
 
+yf.set_tz_cache_location("../yf_cache")
+
 strats = {
     "MA": get_ma_signal,
     "BB": get_bb_signal,

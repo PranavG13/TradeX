@@ -77,7 +77,7 @@ function Home() {
       
       const intervalId = setInterval(() => {
         fetchStockDetails(selectedSymbol, false); // silent loading
-      }, 10000); // fetch every 7 sec
+      }, 50000); // fetch every 50 sec
       
       return () => clearInterval(intervalId);
     }, [getDetails])

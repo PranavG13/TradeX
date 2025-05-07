@@ -90,7 +90,7 @@ function PaperTrading() {
 
     const intervalId = setInterval(() => {
       fetchPrices();
-    }, 20000); // fetch every 20 sec
+    }, 50000); // fetch every 50 sec
 
     return () => clearInterval(intervalId);
   }, [userDetails])
@@ -126,7 +126,7 @@ function PaperTrading() {
     
     const intervalId = setInterval(() => {
       fetchStockDetails(selectedSymbol, false); // silent loading
-    }, 7000); // fetch every 7 sec
+    }, 50000); // fetch every 50 sec
     
     return () => clearInterval(intervalId);
   }, [getDetailsPressed]);

@@ -9,6 +9,8 @@ from knox.models import AuthToken
 from core.permissions import IsOwner
 import yfinance as yf
 
+yf.set_tz_cache_location("./yf_cache")
+
 User = get_user_model()
 
 class LoginViewset(viewsets.ViewSet):

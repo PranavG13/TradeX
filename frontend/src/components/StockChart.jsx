@@ -330,7 +330,7 @@ if (indicators.macd) {
             updateIndicators(fetchedHist);
 
             fetchData();
-            const id = setInterval(fetchData, 1000);
+            const id = setInterval(fetchData, 10000); // fetches stock data every 10 sec
             setIntervalId(id);
         } catch (err) {
             setIsLoading(false);

@@ -1,6 +1,7 @@
 from .utils import *
 import yfinance as yf
 
+yf.set_tz_cache_location("../yf_cache")
 
 def get_signal(data, code):
     import pandas as pd

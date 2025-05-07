@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
-from .recommend_backtest.backtester import run_script
+from .backtester import run_script
 
 @api_view(['POST'])
 def backtesting(request):

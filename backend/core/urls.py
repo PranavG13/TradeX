@@ -2,8 +2,8 @@ from django.urls import path, include
 from .views import *
 from .papertrading_apiendpoints import *
 from .charts_apiendpoints import *
-from .backtesting_apiendpoints import *
-from .recommendation_apiendpoints import *
+from .recommend_backtest.backtesting_apiendpoints import *
+from .recommend_backtest.recommendation_apiendpoints import *
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()

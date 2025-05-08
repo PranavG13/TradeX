@@ -17,7 +17,7 @@ def get_recommendation(sym, interval):
     
     output = {}
     for strat, func in strats.items():
-        data[strat] = func(data=data)
+        data[strat] = func(ticker=data)
         res = backtest(data, strat)
         tt = transform_trades(res[-1])
 

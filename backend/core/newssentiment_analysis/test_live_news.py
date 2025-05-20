@@ -35,11 +35,11 @@ def main():
 
     print("\n📊 Sentiment Predictions:")
     for headline, pred, conf in zip(headlines, predictions, confidences):
-        if pred == 1:
-            sentiment = "Positive ✅"
+        if pred == 0:
+            sentiment = "Negative"
         
         else:
-            sentiment = "Negative ❌"
+            sentiment = "Positive"
         
         print(f"• {headline}\n  → Sentiment: {sentiment} (Confidence: {conf:.2f})\n")
 

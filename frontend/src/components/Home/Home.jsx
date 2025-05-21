@@ -173,11 +173,11 @@ function Home() {
           <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
             {stockNews.data?.map((item, index) => (
               <li key={index}>
-                <a href={item[1]} className={item[2] >= 1? "hover:underline text-green-600" :  "hover:underline text-red-600"}>
+                <a href={item[1]} className={item[2] === 1? "hover:underline text-green-600" :  "hover:underline text-red-600"}>
                   {item[0]}
                 </a>
-                <span className={item[2] >= 1 ? "text-green-600" : "text-red-600"}>
-                  {item[2] >= 1 ? "📈" : "📉"}
+                <span className={item[2] === 1 ? "text-green-600" : "text-red-600"}>
+                  {item[2] === 1 ? "📈" : "📉"}
                 </span>
 
                 {/* Optionally show prediction and confidence */}

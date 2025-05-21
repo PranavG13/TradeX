@@ -9,6 +9,10 @@ function Home() {
   const [stockDetails, setStockDetails] = useState(null);
   const [errorStockDetails, setErrorStockDetails] = useState(false);
   const [isLoadingStockDetails, setIsLoadingStockDetails] = useState(false);
+
+  const [stockNews, setStockNews] = useState(null);
+  const [isLoadingStockNews, setIsLoadingStockNews] = useState(false);
+  const [errorStockNews, setErrorStockNews] = useState(false);
   // const [strategyText, setStrategyText] = useState('')
   // const [strategySymbol, setStrategySymbol] = useState('')
   // const [strategyInterval, setStrategyInterval] = useState('daily')
@@ -72,6 +76,7 @@ function Home() {
       console.log("searching for ", data.searchSymbol);
       setSelectedSymbol(data.searchSymbol);
       fetchStockDetails(data.searchSymbol);
+      fetchNews(data.searchSymbol);
     }
 
     const fetchStockDetails = async (symbol, showLoading = true) => {
@@ -96,6 +101,22 @@ function Home() {
         }
       }
     };
+
+    const fetchNews = async (symbol) => {
+      try{
+        console.log("fetching news for ", symbol);
+        setIsLoadingStockNews(true);
+        setErrorStockNews(false);
+        const response = await AxiosInstance.post(`api/news-sentiment`, {"symbol" : symbol});
+        console.log(response.data);
+        setStockNews(response.data);
+      } catch (error) {
+        console.error("Error in fetching news: ", error);
+        setErrorStockNews(true);
+      } finally {
+        setIsLoadingStockNews(false);
+      }
+    }
 
     const renderStockDetails = () => {
       if (isLoadingStockDetails) {
@@ -129,6 +150,44 @@ function Home() {
         </div>
       );
     };
+
+    const renderStockNews = () => {
+      if (isLoadingStockNews) {
+        return <div>Loading News for {selectedSymbol}</div>;
+      }
+    
+      if (errorStockDetails) {
+        return (
+          <div>
+            <h2>Error Loading News for {selectedSymbol}</h2>
+          </div>
+        );
+      }
+
+      if(stockNews === null) {
+        return (<></>);
+      }
+      return (
+        <div className="p-4 bg-gray-100 rounded shadow">
+          <h2 className="font-bold mb-4">Related News</h2>
+          <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
+            {stockNews.data?.map((item, index) => (
+              <li key={index}>
+                <a href={item[1]} className={item[2] >= 1? "hover:underline text-green-600" :  "hover:underline text-red-600"}>
+                  {item[0]}
+                </a>
+                <span className={item[2] >= 1 ? "text-green-600" : "text-red-600"}>
+                  {item[2] >= 1 ? "📈" : "📉"}
+                </span>
+
+                {/* Optionally show prediction and confidence */}
+                {/* <div className="text-xs text-gray-500">Sentiment: {item.prediction} ({item.confidence}%)</div> */}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
@@ -223,14 +282,8 @@ function Home() {
           </form>
     
           {/* Related News Section */}
-          <div className="p-4 bg-gray-100 rounded shadow">
-            <h2 className="font-bold mb-4">Related News</h2>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
-              <li><a href="#" className="hover:underline text-blue-600">Bitcoin hits new all-time high amid market optimism</a></li>
-              <li><a href="#" className="hover:underline text-blue-600">Tesla stock rises after strong quarterly earnings</a></li>
-              <li><a href="#" className="hover:underline text-blue-600">Analysts predict bullish crypto trend through Q3</a></li>
-            </ul>
-          </div>
+          {renderStockNews()}
+          
         </div>
       );
 }

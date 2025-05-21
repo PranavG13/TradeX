@@ -4,6 +4,7 @@ from .papertrading_apiendpoints import *
 from .charts_apiendpoints import *
 from .recommend_backtest.backtesting_apiendpoints import *
 from .recommend_backtest.recommendation_apiendpoints import *
+from .newssentiment_analysis.apiendpoints import news_and_sentiment
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -26,8 +27,10 @@ urlpatterns = [
     path('historical/<str:symbol>', get_historical, name='get-historical'),
     path('stock/<str:symbol>', get_live_stock, name='get-live-stock'),
     path('api/latest/<str:symbol>', get_latest, name='get-latest'),
-    # back-testing
+    # back-testing api end points
     path('api/backtesting', backtesting, name='backtesting'),
-    # recommendation
+    # recommendation api end points
     path('api/recommendation', recommendation, name='recommendation'),
+    # news sentiment analysis api end points
+    path('api/news-sentiment', news_and_sentiment, name='news_and_sentiment'),
 ]

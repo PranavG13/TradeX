@@ -1,4 +1,4 @@
-from .utils import *
+from utils import *
 import yfinance as yf
 from functools import partial
 
@@ -17,14 +17,18 @@ def get_recommendation(sym, interval):
     
     output = {}
     for strat, func in strats.items():
-        data[strat] = func(ticker=data)
+        data[strat] = func(ticker=data)["signal"]
         res = backtest(data, strat)
         tt = transform_trades(res[-1])
-
-        side = tt[2] if tt[1] is None else "None"
-
+        # print(strat, ":",tt[-1])
+        if len(tt) > 1:
+            side = tt[-1][2] if tt[-1][1] is None else None
+        else:
+            side = None
         output[strat] = side
     return output
 
+if __name__ == "__main__":
+    print(get_recommendation("BTC-USD", "1d"))
         
         

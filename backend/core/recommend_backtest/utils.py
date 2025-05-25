@@ -34,11 +34,11 @@ def get_dmi_signal(ticker, period=14, adx_threshold=25):
 def get_ma_signal(ticker, short_window=50, long_window=200, use_ema=False):
     df = ticker.copy()
     if use_ema:
-        df['Short_MA'] = df['Close'].ta.ema(length=short_window)
-        df['Long_MA'] = df['Close'].ta.ema(length=long_window)
+        df['Short_MA'] = df.ta.ema(length=short_window)
+        df['Long_MA'] = df.ta.ema(length=long_window)
     else:
-        df['Short_MA'] = df['Close'].ta.sma(length=short_window)
-        df['Long_MA'] = df['Close'].ta.sma(length=long_window)
+        df['Short_MA'] = df.ta.sma(length=short_window)
+        df['Long_MA'] = df.ta.sma(length=long_window)
     df["signal"] = np.where(df["Short_MA"] > df["Long_MA"], 1,
                             np.where(df["Short_MA"] < df["Long_MA"], -1, 0))
     return df[['Close', 'Short_MA', 'Long_MA', 'signal']]
@@ -145,18 +145,18 @@ def backtest(data, signal_column=None, preds=None):
                 initial_price = row["Close"] - profit
             ltp = price
             trades.append((idx.strftime("%Y-%m-%d %H:%M"), "Long Entry", price, None))
-      if trades:
-         if "Entry" in trades[-1][1]:
-            pri = trades[-1][2]
-            if "Long" in trades[-1][1]:
-               ent = "Long Exit"
-               prf = price - pri
-            else:
-               ent = "Short Exit"
-               prf = pri - price
-            trades.append((idx.strftime("%Y-%m-%d %H:%M"), ent, price, prf))
+    #   if trades:
+    #      if "Entry" in trades[-1][1]:
+    #         pri = trades[-1][2]
+    #         if "Long" in trades[-1][1]:
+    #            ent = "Long Exit"
+    #            prf = price - pri
+    #         else:
+    #            ent = "Short Exit"
+    #            prf = pri - price
+    #         trades.append((idx.strftime("%Y-%m-%d %H:%M"), ent, price, prf))
 
-      return initial_price, profit, data["Close"][0],data["Close"][-1] - data["Close"][0], trades
+      return initial_price, profit, data["Close"].iloc[0],data["Close"].iloc[-1] - data["Close"].iloc[0], trades
 
 
 import pandas as pd

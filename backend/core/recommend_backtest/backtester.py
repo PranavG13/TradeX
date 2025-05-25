@@ -1,4 +1,4 @@
-from .utils import *
+from utils import *
 import yfinance as yf
 
 yf.set_tz_cache_location("../yf_cache")
@@ -33,7 +33,14 @@ def run_script(symbol, interval, code):
     initial_price, profit, first_close, buyNhold, trades = backtest(data, "script")
     df = pd.DataFrame(trades, columns=["Timestamp", "Action", "Price", "PnL"])
     
-    tt = transform_trades(df)
-    metrics = calculate_metrics(tt)
+    tt = transform_trades(trades)
+    metrics = calculate_metrics(df)
 
-    return metrics, tt, profit, initial_price, buyNhold, first_close
+    metrics["Capital"] = profit
+    metrics["Buy and Hold"] = buyNhold
+    metrics["Strating price"] = first_close
+    return metrics, tt
+
+
+if __name__ == "__main__":
+    print(run_script("BTC-USD", "1d", "df['signal'] = np.where(df.ta.sma(length=20) > df.ta.sma(length=50), 1, -1)")[0])

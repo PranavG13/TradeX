@@ -1,4 +1,4 @@
-from utils import *
+from .utils import *
 import yfinance as yf
 
 yf.set_tz_cache_location("../yf_cache")

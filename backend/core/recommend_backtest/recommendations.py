@@ -1,4 +1,4 @@
-from utils import *
+from .utils import *
 import yfinance as yf
 from functools import partial
 
@@ -25,7 +25,7 @@ def get_recommendation(sym, interval):
             side = tt[-1][2] if tt[-1][1] is None else None
         else:
             side = None
-        output[strat] = side
+        output[strat] = "Buy" if side.lower() == "long" else "Sell" 
     return output
 
 if __name__ == "__main__":

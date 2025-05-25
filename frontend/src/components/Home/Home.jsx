@@ -30,18 +30,17 @@ function Home() {
       // data = Object { strategySymbol: "BTC-USD", strategyInterval: "day", strategyText: "Text123" }
 
       // posting data to api
-      // AxiosInstance.post(
-      //     `api/backtesting/`,
-      //     data
-      // )
-      // .then((response) => {
-      //      HANDLE RESPONSE HERE
-      //     console.log(response);
-      //   
-      // })
-      // .catch((error) => {
-      //     console.error("error during strategy testing", error);
-      // })
+      AxiosInstance.post(
+          `api/backtesting`,
+          data
+      )
+      .then((response) => {
+          console.log("response received: ", response.data);
+        
+      })
+      .catch((error) => {
+          console.error("error during strategy testing", error);
+      })
     }
 
     //Form 2: Recommendation
@@ -233,9 +232,9 @@ function Home() {
                   className="w-[50%] p-2 border rounded bg-white" 
                   {...registerStrategy("strategyInterval", {required: "Select Interval"})}
                 >
-                  <option value={"day"}>day</option>
-                  <option value={"week"}>week</option>
-                  <option value={"month"}>month</option>
+                  <option value={"1d"}>day</option>
+                  <option value={"1wk"}>week</option>
+                  <option value={"1mo"}>month</option>
                 </select>
                 {errorsStrategy.strategyInterval && <span className="text-sm text-red-600">{errorsStrategy.strategyInterval.message}</span>}
               </div>

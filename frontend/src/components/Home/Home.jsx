@@ -13,6 +13,14 @@ function Home() {
   const [stockNews, setStockNews] = useState(null);
   const [isLoadingStockNews, setIsLoadingStockNews] = useState(false);
   const [errorStockNews, setErrorStockNews] = useState(false);
+
+  const [recommendation, setRecommendation] = useState(null);
+  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
+  const [errorRecommendation, setErrorRecommendation] = useState(false);
+
+  const [backtest, setBacktest] = useState(null);
+  const [isLoadingBacktest, setIsLoadingBacktest] = useState(false);
+  const [errorBacktest, setErrorBacktest] = useState(false);
   // const [strategyText, setStrategyText] = useState('')
   // const [strategySymbol, setStrategySymbol] = useState('')
   // const [strategyInterval, setStrategyInterval] = useState('daily')
@@ -28,19 +36,63 @@ function Home() {
     const testStrategyHandler = (data) => {
       console.log("form submitted", data);
       // data = Object { strategySymbol: "BTC-USD", strategyInterval: "day", strategyText: "Text123" }
+      fetchBacktest(data);
+    }
 
-      // posting data to api
-      AxiosInstance.post(
-          `api/backtesting`,
-          data
-      )
-      .then((response) => {
-          console.log("response received: ", response.data);
-        
-      })
-      .catch((error) => {
-          console.error("error during strategy testing", error);
-      })
+    const fetchBacktest = async (data) => {
+      try{
+        setIsLoadingBacktest(true);
+        setErrorBacktest(false);
+        const response = await  AxiosInstance.post(`api/backtesting`,data)
+        const result = {
+          "AvgLoss" : response.data.metrics["Avg Loss"],
+          "AvgWin" : response.data.metrics["Avg Win"],
+          "BuyAndHold": response.data.metrics["Buy and Hold"],
+          "CAGR": response.data.metrics["CAGR (%)"],
+          "CalmarRatio": response.data.metrics["Calmar Ratio"],
+          "TotalTrades": response.data.metrics["Total Trades"],
+          "WinRatio": response.data.metrics["Win Ratio"],
+        }
+        setBacktest(result);
+      } catch (error) {
+        console.error("error during strategy testing", error);
+        setErrorBacktest(true);
+      } finally {
+        setIsLoadingBacktest(false);
+      }
+    }
+
+    const renderBacktest = () => {
+      if (isLoadingBacktest) {
+        return <div>Loading...</div>;
+      }
+    
+      if (errorBacktest) {
+        return (
+          <div>
+            <h2>Error Occurred</h2>
+          </div>
+        );
+      }
+
+      if(backtest === null) {
+        return (<></>);
+      }
+    
+      const { AvgLoss, AvgWin, BuyAndHold, CAGR, CalmarRatio, TotalTrades, WinRatio } = backtest;
+    
+      return (
+        <div className="p-4 bg-gray-100 rounded shadow my-6">
+          <h2 className="font-bold mb-2">Strategy Results: </h2>
+          <p>Average Loss: <strong>{AvgLoss ?? "N/A"}</strong></p>
+          <p>Average Win: <strong>{AvgWin ?? "N/A"}</strong></p>
+          <p>Buy & Hold: <strong>{BuyAndHold ?? "N/A"}</strong></p>
+          <p>CAGR: <strong>{CAGR ?? "N/A"}</strong></p>
+          <p>Calmar Ratio: <strong>{CalmarRatio ?? "N/A"}</strong></p>
+          <p>Total Trades: <strong>{TotalTrades ?? "N/A"}</strong></p>
+          <p>Win Ratio: <strong>{WinRatio ?? "N/A"}</strong></p>
+        </div>
+      );
     }
 
     //Form 2: Recommendation
@@ -53,17 +105,62 @@ function Home() {
     const recommendationHandler = (data) => {
       console.log("recommendation form submitted", data);
       //data = Object {recommendationSymbol: "BTC-USD", recommendationInterval: "day/week/month"}
-      AxiosInstance.post(
-        `api/recommendation`,
-        data
-      )
-      .then((response) => {
-        console.log("response recieved", response);
-      })
-      .catch((error) => {
-        console.log("Erorr in recommendation", error);
-      })
+      fetchRecommendation(data);
     }
+
+    const fetchRecommendation = async (data) => {
+      try{
+        setIsLoadingRecommendation(true);
+        setErrorRecommendation(false);
+
+        const response = await AxiosInstance.post(`api/recommendation`,data);
+
+        const result = {
+                          "RSI": response.data['RSI'],
+                          "MA": response.data['MA'],
+                          "BB": response.data['BB'],
+                        }
+        setRecommendation(result);
+
+      } catch (error) {
+        console.log("Erorr in recommendation", error);
+        setErrorRecommendation(true);
+      } finally {
+        setIsLoadingRecommendation(false);
+      }
+
+    }
+
+    const renderRecommendation = () => {
+      if (isLoadingRecommendation) {
+        return <div>Loading Recommendation</div>;
+      }
+    
+      if (errorRecommendation) {
+        return (
+          <div>
+            <h2>Error Loading Recommendation</h2>
+          </div>
+        );
+      }
+
+      if(recommendation === null) {
+        return (<></>);
+      }
+    
+      const { RSI, MA, BB } = recommendation;
+    
+      return (
+        <div className="p-4 bg-gray-100 rounded shadow my-6">
+          <h2 className="font-bold mb-2">Recommendations: </h2>
+          <p>RSI: <strong>{RSI ?? "N/A"}</strong></p>
+          <p>MA: <strong>{MA ?? "N/A"}</strong></p>
+          <p>BB: <strong>{BB ?? "N/A"}</strong></p>
+        </div>
+      );
+    };
+
+    // Form 3 : symbol search
 
     const {
       register: registerSearch,
@@ -248,8 +345,11 @@ function Home() {
                 {errorsStrategy.strategyText && <span className="text-sm text-red-600">{errorsStrategy.strategyText.message}</span>}
               </div>
               <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" type="submit">Test Strategy</button>
+              {/* Render bactest Results*/}
+              {renderBacktest()}
             </div>
           </form>
+
           {/* Stock Recommendation */}
           <form onSubmit={handleRecommendationSubmit(recommendationHandler)}>
             <div className="p-4 bg-gray-100 rounded shadow mb-6">
@@ -277,8 +377,11 @@ function Home() {
                 {errorsRecommendation.recommendationInterval && <span className="text-sm text-red-600">{errorsRecommendation.recommendationInterval.message}</span>}
               </div>
               <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" type="submit">Get Recommendation</button>
+              {/* Render Stock Recommendation */}
+              {renderRecommendation()}
             </div>
           </form>
+          
     
           {/* Related News Section */}
           {renderStockNews()}

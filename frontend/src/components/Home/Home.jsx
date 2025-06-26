@@ -264,7 +264,7 @@ function Home() {
         return (<></>);
       }
       return (
-        <div className="p-4 bg-gray-100 rounded shadow">
+        <div className="mb-6 p-4 bg-gray-100 rounded shadow">
           <h2 className="font-bold mb-4">Related News</h2>
           <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
             {stockNews.data?.map((item, index) => (
@@ -301,13 +301,16 @@ function Home() {
                   {...registerSearch("searchSymbol", {required: "Enter Symbol "})}
                 />
                 {errorsSearch.searchSymbol && <span className="text-sm text-red-600">{errorsSearch.searchSymbol.message}</span>}
-                <button className="bg-blue-600 text-white px-4 py-2 rounded" type="submit">Get Details</button>
+                <button className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" type="submit">Get Details</button>
               </div>
             </div>
           </form>
     
           {/* Stock Details */}
           {renderStockDetails()}
+
+          {/* Related News Section */}
+          {renderStockNews()}
     
           {/* Test Strategy OR Back-testing */}
           <form onSubmit={handleStrategySubmit(testStrategyHandler)}>
@@ -381,11 +384,6 @@ function Home() {
               {renderRecommendation()}
             </div>
           </form>
-          
-    
-          {/* Related News Section */}
-          {renderStockNews()}
-          
         </div>
       );
 }

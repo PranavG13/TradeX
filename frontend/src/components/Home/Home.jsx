@@ -52,6 +52,8 @@ function Home() {
           "CalmarRatio": response.data.metrics["Calmar Ratio"],
           "TotalTrades": response.data.metrics["Total Trades"],
           "WinRatio": response.data.metrics["Win Ratio"],
+          "NetProfit": response.data.metrics["Net Profit"],
+          "GrossProfit": response.data.metrics["Gross Profit"],
         }
         setBacktest(result);
       } catch (error) {
@@ -79,11 +81,13 @@ function Home() {
         return (<></>);
       }
     
-      const { AvgLoss, AvgWin, BuyAndHold, CAGR, CalmarRatio, TotalTrades, WinRatio } = backtest;
+      const { AvgLoss, AvgWin, BuyAndHold, CAGR, CalmarRatio, TotalTrades, WinRatio, NetProfit, GrossProfit } = backtest;
     
       return (
         <div className="p-4 bg-gray-100 rounded shadow my-6">
           <h2 className="font-bold mb-2">Strategy Results: </h2>
+          <p>Net Profit: <strong>{NetProfit ?? "N/A"}</strong></p>
+          <p>Gross Profit: <strong>{GrossProfit ?? "N/A"}</strong></p>
           <p>Average Loss: <strong>{AvgLoss ?? "N/A"}</strong></p>
           <p>Average Win: <strong>{AvgWin ?? "N/A"}</strong></p>
           <p>Buy & Hold: <strong>{BuyAndHold ?? "N/A"}</strong></p>
@@ -342,6 +346,7 @@ function Home() {
                 <label className="block font-semibold mb-1">Strategy</label>
                 <textarea
                 id="strategy-text"
+                spellCheck = {false}
                 className="w-full h-20 p-2 bg-white"
                 {...registerStrategy("strategyText", {required: "Enter Strategy"})}
                 ></textarea>

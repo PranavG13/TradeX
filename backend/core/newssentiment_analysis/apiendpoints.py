@@ -73,7 +73,7 @@ def news_and_sentiment(request):
         return Response({"error": "cannot process request"}, status=status.HTTP_400_BAD_REQUEST)
 
     if is_indian_stock(symbol):
-        api_key = "sZvNY6tfUphR9fVk3pCMy9aapX7yhz23dOa1UIrp"
+        api_key = "INSERT_API_KEY_HERE"
         url = f"https://api.marketaux.com/v1/news/all"
         params = {
             "symbols": symbol,
@@ -97,7 +97,7 @@ def news_and_sentiment(request):
             print(f'Error in fetch news, {e}')
             return Response({"error": "error while processing request"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        api_key = "d0m99ehr01qkesvjceg0d0m99ehr01qkesvjcegg"
+        api_key = "INSERT_API_KEY_HERE"
         url = f"https://finnhub.io/api/v1/company-news"
         params = {
             "symbol": symbol,
